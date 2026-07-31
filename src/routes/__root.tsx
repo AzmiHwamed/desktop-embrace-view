@@ -7,11 +7,14 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { Provider } from "react-redux";
 
+import { makeStore, type AppStore } from "../app/store";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppLayout } from "../components/AppLayout";
+
 
 
 function NotFoundComponent() {
