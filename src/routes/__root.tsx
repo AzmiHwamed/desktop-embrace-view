@@ -132,14 +132,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const storeRef = useRef<AppStore | undefined>(undefined);
+  if (!storeRef.current) storeRef.current = makeStore();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppLayout>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </AppLayout>
-    </QueryClientProvider>
+    <Provider store={storeRef.current}>
+      <QueryClientProvider client={queryClient}>
+        <AppLayout>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </AppLayout>
+      </QueryClientProvider>
+    </Provider>
   );
 }
+
 
