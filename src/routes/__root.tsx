@@ -7,11 +7,14 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { Provider } from "react-redux";
 
+import { makeStore, type AppStore } from "../app/store";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppLayout } from "../components/AppLayout";
+
 
 
 function NotFoundComponent() {
@@ -132,14 +135,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const storeRef = useRef<AppStore | undefined>(undefined);
+  if (!storeRef.current) storeRef.current = makeStore();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppLayout>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </AppLayout>
-    </QueryClientProvider>
+    <Provider store={storeRef.current}>
+      <QueryClientProvider client={queryClient}>
+        <AppLayout>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </AppLayout>
+      </QueryClientProvider>
+    </Provider>
   );
 }
+
 
