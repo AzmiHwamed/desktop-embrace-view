@@ -1,5 +1,5 @@
-import { useRouterState } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { AppSidebar } from "@/components/AppSidebar";
@@ -9,16 +9,26 @@ import { restoreSession } from "@/features/auth/authSlice";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isAuthenticated = useAppSelector((s) => Boolean(s.auth.token));
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   useEffect(() => {
     dispatch(restoreSession());
+    setSessionChecked(true);
   }, [dispatch]);
+
+  useEffect(() => {
+    if (sessionChecked && !isAuthenticated && pathname !== "/login") {
+      navigate({ to: "/login", replace: true });
+    }
+  }, [sessionChecked, isAuthenticated, pathname, navigate]);
 
   if (pathname === "/login") {
     return <>{children}</>;
   }
+
 
   return (
     <SidebarProvider>
