@@ -14,6 +14,7 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as ConvertRouteImport } from './routes/convert'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ScanRouteImport } from './routes/scan'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -43,6 +44,11 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/convert': typeof ConvertRoute
   '/expenses': typeof ExpensesRoute
   '/history': typeof HistoryRoute
+  '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/convert': typeof ConvertRoute
   '/expenses': typeof ExpensesRoute
   '/history': typeof HistoryRoute
+  '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/convert': typeof ConvertRoute
   '/expenses': typeof ExpensesRoute
   '/history': typeof HistoryRoute
+  '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/convert'
     | '/expenses'
     | '/history'
+    | '/login'
     | '/notifications'
     | '/scan'
     | '/settings'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/convert'
     | '/expenses'
     | '/history'
+    | '/login'
     | '/notifications'
     | '/scan'
     | '/settings'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/convert'
     | '/expenses'
     | '/history'
+    | '/login'
     | '/notifications'
     | '/scan'
     | '/settings'
@@ -129,6 +141,7 @@ export interface RootRouteChildren {
   ConvertRoute: typeof ConvertRoute
   ExpensesRoute: typeof ExpensesRoute
   HistoryRoute: typeof HistoryRoute
+  LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
   ScanRoute: typeof ScanRoute
   SettingsRoute: typeof SettingsRoute
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notifications': {
       id: '/notifications'
       path: '/notifications'
@@ -201,6 +221,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConvertRoute: ConvertRoute,
   ExpensesRoute: ExpensesRoute,
   HistoryRoute: HistoryRoute,
+  LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
   ScanRoute: ScanRoute,
   SettingsRoute: SettingsRoute,
