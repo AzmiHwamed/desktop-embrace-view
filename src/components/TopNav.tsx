@@ -1,12 +1,22 @@
-import { Link } from "@tanstack/react-router";
-import { Bell, Plus, Search, ScanLine } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Bell, LogOut, Plus, Search, ScanLine } from "lucide-react";
 
+import { useAppDispatch } from "@/app/hooks";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { logout } from "@/features/auth/authSlice";
 
-export function TopNav() {
+export function TopNav({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  const handleSignOut = () => {
+    dispatch(logout());
+    navigate({ to: "/login", replace: true });
+  };
+
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:gap-4 lg:px-8">
@@ -39,17 +49,37 @@ export function TopNav() {
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
             </Link>
           </Button>
-          <Link to="/account" className="flex min-w-0 items-center gap-2 rounded-xl px-1 py-1">
-            <Avatar className="h-9 w-9 shrink-0">
-              <AvatarFallback className="bg-accent text-accent-foreground text-xs font-bold">
-                AL
-              </AvatarFallback>
-            </Avatar>
-            <span className="hidden min-w-0 lg:block">
-              <span className="block truncate text-sm font-semibold leading-tight">Alex Lang</span>
-              <span className="block truncate text-xs text-muted-foreground">Lisbon · EUR</span>
-            </span>
-          </Link>
+
+          {isAuthenticated ? (
+            <>
+              <Link to="/account" className="flex min-w-0 items-center gap-2 rounded-xl px-1 py-1">
+                <Avatar className="h-9 w-9 shrink-0">
+                  <AvatarFallback className="bg-accent text-accent-foreground text-xs font-bold">
+                    AL
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden min-w-0 lg:block">
+                  <span className="block truncate text-sm font-semibold leading-tight">
+                    Alex Lang
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">Lisbon · EUR</span>
+                </span>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="rounded-xl"
+                aria-label="Sign out"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <Button asChild variant="outline" className="rounded-xl">
+              <Link to="/login">Sign in</Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>
