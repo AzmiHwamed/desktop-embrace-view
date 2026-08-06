@@ -1,10 +1,21 @@
-import { Bell, CheckCheck, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
+// pages/NotificationsPage.tsx
+import { useEffect } from "react";
+import { CheckCheck, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
 
 import { PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
-import { notifications } from "@/lib/travel-data";
 import { cn } from "@/lib/utils";
 
+import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
+import { interpolate } from "@/lib/i18n";
+import { isRtlLanguage } from "@/lib/rtl";
+import notificationsStrings from "@/locales/en/notifications.json";
+
+import {
+  fetchNotifications,
+  markAllRead,
+  markRead,
+} from "@/features/notifications/notificationsSlice";
 
 const icons = {
   success: CheckCheck,
@@ -21,55 +32,118 @@ const tones = {
 } as const;
 
 export function NotificationsPage() {
+  const dispatch = useAppDispatch();
+  const t = useTranslations("notifications", notificationsStrings);
+
+  const {
+    items,
+    notificationsLoaded,
+    markAllPending,
+    error,
+  } = useAppSelector((state) => state.notifications);
+  const profile = useAppSelector((s) => s.account.profile);
+
+  const isRtl = isRtlLanguage(profile?.language?.code);
+
+  useEffect(() => {
+    dispatch(fetchNotifications());
+  }, [dispatch]);
+
+  const unreadCount = items.filter((n) => n.unread).length;
+
+  // True until the notifications fetch has settled (fulfilled OR rejected)
+  // at least once — mirrors Convert/Dashboard's isPageLoading gate.
+  const isPageLoading = !notificationsLoaded;
+
+  if (isPageLoading) {
+    return <NotificationsSkeleton dir={isRtl ? "rtl" : "ltr"} />;
+  }
+
   return (
-    <div className="space-y-6 lg:space-y-8">
+    <div className="space-y-6 lg:space-y-8" dir={isRtl ? "rtl" : "ltr"}>
       <PageHeader
-        title="Notifications"
-        subtitle="2 unread updates"
+        title={t.title}
+        subtitle={interpolate(unreadCount === 1 ? t.subtitle : t.subtitle_plural, {
+          count: unreadCount,
+        })}
         actions={
-          <Button variant="outline" className="rounded-xl">
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            disabled={unreadCount === 0 || markAllPending}
+            onClick={() => dispatch(markAllRead())}
+          >
             <CheckCheck className="h-4 w-4" />
-            Mark all read
+            {t.markAllRead}
           </Button>
         }
       />
 
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:gap-6">
-        <ul className="surface-card divide-y divide-border overflow-hidden">
-          {notifications.map((n) => {
-            const Icon = icons[n.tone];
-            return (
-              <li
-                key={n.id}
-                className={cn(
-                  "grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-4 px-5 py-4",
-                  n.unread && "bg-accent/40",
-                )}
-              >
-                <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", tones[n.tone])}>
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold">{n.title}</span>
-                  <span className="block text-sm text-muted-foreground">{n.body}</span>
-                </span>
-                <span className="shrink-0 text-xs text-muted-foreground">{n.time}</span>
-              </li>
-            );
-          })}
-        </ul>
+      <ul className="surface-card divide-y divide-border overflow-hidden">
+        {items.length === 0 && (
+          <li className="px-5 py-6 text-sm text-muted-foreground">
+            {t.allCaughtUp}
+          </li>
+        )}
 
-        <div className="surface-card p-5">
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-accent text-accent-foreground">
-            <Bell className="h-5 w-5" />
-          </span>
-          <h2 className="mt-4 font-display text-lg font-bold">Stay in the loop</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Rate alerts fire the moment your target is hit, so you can convert at the best moment of
-            the day.
-          </p>
-          <Button className="bg-brand mt-4 w-full rounded-xl shadow-brand">Create rate alert</Button>
+        {items.map((n) => {
+          const Icon = icons[n.tone];
+          return (
+            <li
+              key={n.id}
+              role={n.unread ? "button" : undefined}
+              onClick={() => n.unread && dispatch(markRead(n.id))}
+              className={cn(
+                "grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-4 px-5 py-4",
+                n.unread && "bg-accent/40 cursor-pointer",
+              )}
+            >
+              <span className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-xl", tones[n.tone])}>
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{n.title}</span>
+                <span className="block text-sm text-muted-foreground">{n.body}</span>
+              </span>
+              <span className="shrink-0 text-xs text-muted-foreground">{n.time}</span>
+            </li>
+          );
+        })}
+      </ul>
+
+      {error && (
+        <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function NotificationsSkeleton({ dir }: { dir: "rtl" | "ltr" }) {
+  // Purely visual placeholders — no translatable text, so only `dir` is
+  // threaded through, same reasoning as ConvertSkeleton/DashboardSkeleton.
+  return (
+    <div className="space-y-6 lg:space-y-8" aria-busy="true" aria-label="Loading notifications" dir={dir}>
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="h-6 w-40 animate-pulse rounded-md bg-muted" />
+          <div className="h-4 w-32 animate-pulse rounded-md bg-muted" />
         </div>
+        <div className="h-10 w-32 animate-pulse rounded-xl bg-muted" />
+      </div>
+
+      <div className="surface-card divide-y divide-border overflow-hidden">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-4 px-5 py-4">
+            <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-muted" />
+            <div className="min-w-0 space-y-2">
+              <div className="h-4 w-40 animate-pulse rounded-md bg-muted" />
+              <div className="h-3 w-56 animate-pulse rounded-md bg-muted" />
+            </div>
+            <div className="h-3 w-10 animate-pulse rounded-md bg-muted" />
+          </div>
+        ))}
       </div>
     </div>
   );

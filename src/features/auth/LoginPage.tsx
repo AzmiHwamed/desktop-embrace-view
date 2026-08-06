@@ -1,27 +1,29 @@
-import { useNavigate } from "@tanstack/react-router";
-import { Plane } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+// pages/LoginPage.tsx
+import { Link } from "@tanstack/react-router";
+import { Loader2, Plane } from "lucide-react";
+import { useState, type FormEvent } from "react";
 
-import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { clearAuthError, login } from "./authSlice";
+import { clearAuthError, login, loginWithProvider } from "./authSlice";
+import { usePostAuthRedirect } from "./usePostAuthRedirect";
+import loginStrings from "@/locales/en/login.json";
+import { getStoredLanguage } from "@/lib/language-preference";
+import { isRtlLanguage } from "@/lib/rtl";
 
 export function LoginPage() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const { status, error } = useAppSelector((s) => s.auth);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const t = useTranslations("login", loginStrings);
+  const isRtl = isRtlLanguage(getStoredLanguage()?.code);
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      navigate({ to: "/", replace: true });
-    }
-  }, [status, navigate]);
+  usePostAuthRedirect();
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
@@ -29,8 +31,18 @@ export function LoginPage() {
     dispatch(login({ email, password }));
   };
 
+  const onGoogle = () => {
+    dispatch(clearAuthError());
+    dispatch(loginWithProvider("google.com"));
+  };
+
+  const onFacebook = () => {
+    dispatch(clearAuthError());
+    dispatch(loginWithProvider("facebook.com"));
+  };
+
   return (
-    <div className="grid min-h-screen w-full bg-background lg:grid-cols-2">
+    <div className="grid min-h-screen w-full bg-background lg:grid-cols-2" dir={isRtl ? "rtl" : "ltr"}>
       <div className="bg-night hidden flex-col justify-between p-10 text-sidebar-primary-foreground lg:flex">
         <div className="flex items-center gap-3">
           <span className="bg-brand grid h-10 w-10 place-items-center rounded-xl text-primary-foreground shadow-brand">
@@ -40,11 +52,10 @@ export function LoginPage() {
         </div>
         <div>
           <h2 className="font-display text-4xl font-extrabold leading-tight tracking-tight">
-            Every receipt, rate and expense — in one workspace.
+            {t.heroTitle}
           </h2>
           <p className="mt-4 max-w-md text-sm opacity-70">
-            Scan receipts in any language, convert currencies live and keep your trip budget on
-            track.
+            {t.heroSubtitle}
           </p>
         </div>
         <p className="text-xs opacity-60">© 2026 SmartTravel</p>
@@ -53,14 +64,41 @@ export function LoginPage() {
       <div className="flex items-center justify-center px-4 py-12 sm:px-8">
         <Card className="w-full max-w-md rounded-2xl border-border shadow-sm">
           <CardContent className="p-6 sm:p-8">
-            <h1 className="font-display text-2xl font-extrabold tracking-tight">Welcome back</h1>
+            <h1 className="font-display text-2xl font-extrabold tracking-tight">{t.welcome}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Sign in to your SmartTravel account.
+              {t.subtitle}
             </p>
 
-            <form className="mt-6 space-y-4" onSubmit={onSubmit}>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 rounded-xl"
+                onClick={onGoogle}
+                disabled={status === "loading"}
+              >
+                Google
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 rounded-xl"
+                onClick={onFacebook}
+                disabled={status === "loading"}
+              >
+                Facebook
+              </Button>
+            </div>
+
+            <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              {t.or}
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
+            <form className="space-y-4" onSubmit={onSubmit}>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t.email}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -73,7 +111,15 @@ export function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">{t.password}</Label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-xs font-medium text-primary hover:underline"
+                  >
+                    {t.forgotPassword}
+                  </Link>
+                </div>
                 <Input
                   id="password"
                   type="password"
@@ -97,12 +143,16 @@ export function LoginPage() {
                 disabled={status === "loading"}
                 className="bg-brand h-11 w-full rounded-xl shadow-brand"
               >
-                {status === "loading" ? "Signing in…" : "Sign in"}
+                {status === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
+                {status === "loading" ? t.signingIn : t.signIn}
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-xs text-muted-foreground">
-              Authenticates against your API at http://localhost:3000/auth/login
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              {t.noAccount}{" "}
+              <Link to="/signup" className="font-medium text-primary hover:underline">
+                {t.signUp}
+              </Link>
             </p>
           </CardContent>
         </Card>

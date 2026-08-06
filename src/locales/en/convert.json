@@ -1,0 +1,18 @@
+{
+  "title": "Convert currency",
+  "subtitle": "Live mid-market rates, no hidden markup.",
+  "youSend": "You send",
+  "theyReceive": "They receive",
+  "fromPlaceholder": "From",
+  "toPlaceholder": "To",
+  "swapCurrencies": "Swap currencies",
+  "rate": "Rate",
+  "date": "Date",
+  "converting": "Converting...",
+  "convert": "Convert {amount} {code}",
+  "currentConversion": "Current conversion",
+  "poweredBy": "Powered by live exchange rates",
+  "from": "From",
+  "to": "To",
+  "convertedAmount": "Converted amount"
+}

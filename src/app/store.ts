@@ -9,6 +9,11 @@ import historyReducer from "@/features/history/historySlice";
 import notificationsReducer from "@/features/notifications/notificationsSlice";
 import scanReducer from "@/features/scan/scanSlice";
 import settingsReducer from "@/features/settings/settingsSlice";
+import faqReducer from "@/features/settings/faqSlice";
+import chatReducer from "@/features/chat/chatSlice";
+import i18nReducer from "@/features/i18n/i18nSlice";
+import subscriptionReducer from "@/features/subscription/subscriptionSlice";
+
 
 export const makeStore = () =>
   configureStore({
@@ -22,6 +27,10 @@ export const makeStore = () =>
       notifications: notificationsReducer,
       account: accountReducer,
       settings: settingsReducer,
+      faq : faqReducer,
+      chat:chatReducer,
+      i18n : i18nReducer,
+      subscription: subscriptionReducer,
     },
   });
 

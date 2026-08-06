@@ -1,3 +1,4 @@
+// store/settings/settingsSlice.ts — unchanged, preferences stay local-only
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import type { SettingsState } from "./types";

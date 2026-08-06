@@ -1,0 +1,21 @@
+{
+  "title": "Expenses",
+  "subtitle": "Track spend across your trips",
+  "thisWeek": "This week",
+  "thisMonth": "This month",
+  "allTime": "All time",
+  "totalSpent": "Total spent",
+  "loading": "Loading…",
+  "acrossExpenses": "Across {count} expenses",
+  "acrossExpense": "Across {count} expense",
+  "dailyAverage": "Daily average",
+  "budgetPerDay": "Budget {amount}/day",
+  "selectTimeRange": "Select a time range",
+  "byCategory": "By category",
+  "shareOfSpend": "Share of total spend",
+  "noExpensesPeriod": "No expenses in this period yet.",
+  "uncategorized": "Uncategorized",
+  "largestExpenses": "Largest expenses",
+  "noExpensesYet": "No expenses yet.",
+  "expense": "Expense"
+}

@@ -1,0 +1,11 @@
+{
+  "title": "Your access has ended",
+  "subtitle": "Subscribe to keep using the app.",
+  "redirecting": "Redirecting…",
+  "subscribe": "Subscribe",
+  "popupBlocked": "Your browser blocked the checkout window. Allow pop-ups for this site and try again.",
+  "checkoutWindowTitle": "Opening secure checkoutâ€¦",
+  "invalidCheckoutUrl": "The checkout service returned an invalid URL.",
+  "checkoutWindowClosed": "The checkout window was closed before payment could begin.",
+  "checkoutFailed": "Failed to start checkout. Please try again."
+}

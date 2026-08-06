@@ -1,3 +1,4 @@
+// routes/__root.tsx
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -9,11 +10,13 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useRef, type ReactNode } from "react";
 import { Provider } from "react-redux";
+import { applyDocumentLanguage } from "../lib/language-preference";
 
 import { makeStore, type AppStore } from "../app/store";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppLayout } from "../components/AppLayout";
+import { SubscriptionGate } from "../components/SubscriptionGate";
 
 
 
@@ -65,8 +68,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             Try again
           </button>
-          <a
-            href="/"
+          
+            <a href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             Go home
@@ -138,16 +141,20 @@ function RootComponent() {
   const storeRef = useRef<AppStore | undefined>(undefined);
   if (!storeRef.current) storeRef.current = makeStore();
 
+  useEffect(() => {
+    applyDocumentLanguage();
+  }, []);
+
   return (
     <Provider store={storeRef.current}>
       <QueryClientProvider client={queryClient}>
         <AppLayout>
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
+          <SubscriptionGate>
+            <Outlet />
+          </SubscriptionGate>
         </AppLayout>
       </QueryClientProvider>
     </Provider>
   );
 }
-
-

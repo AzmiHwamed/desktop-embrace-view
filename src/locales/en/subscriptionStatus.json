@@ -1,0 +1,11 @@
+{
+  "active": "Active",
+  "trial": "Trial",
+  "expired": "Expired",
+  "canceled": "Canceled",
+  "renewsOn": "Renews {date}",
+  "trialEndsOn": "Trial ends {date}",
+  "expiredOn": "Expired {date}",
+  "accessUntil": "Access until {date}",
+  "noEndDate": "No end date set"
+}
