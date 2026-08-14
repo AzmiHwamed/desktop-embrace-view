@@ -12,7 +12,7 @@ import { useEffect } from "react";
 import { fetchProfile } from "@/features/account/accountSlice";
 import { interpolate } from "@/lib/i18n";
 import { isRtlLanguage } from "@/lib/rtl";
-import { getSubscriptionDisplay } from "@/lib/subscription";
+import { getEffectiveSubscriptionStatus, getSubscriptionDisplay } from "@/lib/subscription";
 import subscriptionStatusStrings from "@/locales/en/subscriptionStatus.json";
 import topNavStrings from "@/locales/en/topnav.json";
 
@@ -37,7 +37,7 @@ export function TopNav({ isAuthenticated = false }: { isAuthenticated?: boolean 
   };
 
   const { statusLabel, hint } = getSubscriptionDisplay(profile, statusT, interpolate);
-  const isWarning = profile?.subscriptionStatus === "expired" || profile?.subscriptionStatus === "canceled";
+  const effectiveStatus = getEffectiveSubscriptionStatus(profile);
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur">
@@ -59,8 +59,10 @@ export function TopNav({ isAuthenticated = false }: { isAuthenticated?: boolean 
               to="/subscribe"
               className={
                 "hidden items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-semibold sm:flex " +
-                (isWarning
+                (effectiveStatus === "expired"
                   ? "border-destructive/30 bg-destructive/10 text-destructive"
+                  : effectiveStatus === "cancelled"
+                    ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
                   : "border-border bg-muted/60 text-muted-foreground")
               }
               title={hint}

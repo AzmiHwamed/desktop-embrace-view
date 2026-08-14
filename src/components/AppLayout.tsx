@@ -8,9 +8,12 @@ import { TopNav } from "@/components/TopNav";
 import { PageLoading } from "@/components/Loading";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { restoreSession } from "@/features/auth/authSlice";
+import { evaluateBudgetReminders, fetchBudgetExpenses, hydrateBudgets } from "@/features/budgets/budgetSlice";
 import { isRtlLanguage } from "@/lib/rtl";
 import { getStoredLanguage } from "@/lib/language-preference";
 import appShellStrings from "@/locales/en/app-shell.json";
+import { NearbyGuide } from "@/features/explore/NearbyGuide";
+import { CountryLocationMonitor } from "@/features/notifications/CountryLocationMonitor";
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
@@ -18,6 +21,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const isAuthenticated = useAppSelector((s) => Boolean(s.auth.token));
   const profile = useAppSelector((s) => s.account.profile);
+  const budgetsHydrated = useAppSelector((s) => s.budgets.hydrated);
+  const activeBudget = useAppSelector((s) => s.budgets.plans.find((plan) => plan.id === s.budgets.activePlanId));
   const [sessionChecked, setSessionChecked] = useState(false);
   const hasMounted = useHasMounted();
   const t = useTranslations("app-shell", appShellStrings);
@@ -36,6 +41,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
       navigate({ to: "/login", replace: true });
     }
   }, [sessionChecked, isAuthenticated, isPublicAuthPage, navigate]);
+
+  useEffect(() => {
+    if (isAuthenticated && profile && !budgetsHydrated) dispatch(hydrateBudgets());
+  }, [dispatch, isAuthenticated, profile, budgetsHydrated]);
+
+  useEffect(() => {
+    if (!activeBudget || activeBudget.status !== "active") return;
+    dispatch(fetchBudgetExpenses(activeBudget)).then(() => dispatch(evaluateBudgetReminders()));
+  }, [dispatch, activeBudget]);
 
   if (isPublicAuthPage) {
     return <>{children}</>;
@@ -69,6 +83,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
           covers the sidebar/nav chrome that lives outside any single page's
           own root element. */}
       <div className="flex min-h-screen w-full bg-background" dir={isRtl ? "rtl" : "ltr"}>
+        <NearbyGuide />
+        <CountryLocationMonitor />
         <AppSidebar />
         <SidebarInset className="min-w-0 flex-1 bg-background">
           <TopNav isAuthenticated={isAuthenticated} />

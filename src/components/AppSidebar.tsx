@@ -11,6 +11,9 @@ import {
   Settings,
   Plane,
   LifeBuoy,
+  Languages,
+  WalletCards,
+  Compass,
 } from "lucide-react";
 
 import {
@@ -48,8 +51,11 @@ export function AppSidebar() {
     { key: "dashboard", title: t.dashboard, url: "/", icon: LayoutDashboard },
     { key: "scan", title: t.scan, url: "/scan", icon: ScanLine },
     { key: "convert", title: t.convert, url: "/convert", icon: ArrowLeftRight },
+    { key: "interpreter", title: t.interpreter, url: "/interpreter", icon: Languages },
+    { key: "explore", title: t.explore, url: "/explore", icon: Compass },
     { key: "history", title: t.history, url: "/history", icon: History },
     { key: "expenses", title: t.expenses, url: "/expenses", icon: PieChart },
+    { key: "budgets", title: t.budgets, url: "/budgets", icon: WalletCards },
   ];
 
   const accountItems = [
@@ -77,9 +83,7 @@ export function AppSidebar() {
               <span className="block truncate font-display text-sm font-extrabold tracking-tight">
                 {t.brandName}
               </span>
-              <span className="block truncate text-xs text-muted-foreground">
-                {t.brandTagline}
-              </span>
+              <span className="block truncate text-xs text-muted-foreground">{t.brandTagline}</span>
             </span>
           )}
         </div>

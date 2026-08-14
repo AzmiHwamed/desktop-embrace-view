@@ -13,6 +13,7 @@ import faqReducer from "@/features/settings/faqSlice";
 import chatReducer from "@/features/chat/chatSlice";
 import i18nReducer from "@/features/i18n/i18nSlice";
 import subscriptionReducer from "@/features/subscription/subscriptionSlice";
+import budgetsReducer from "@/features/budgets/budgetSlice";
 
 
 export const makeStore = () =>
@@ -31,6 +32,7 @@ export const makeStore = () =>
       chat:chatReducer,
       i18n : i18nReducer,
       subscription: subscriptionReducer,
+      budgets: budgetsReducer,
     },
   });
 

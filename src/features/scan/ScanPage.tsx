@@ -19,7 +19,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -34,6 +39,9 @@ import { isRtlLanguage } from "@/lib/rtl";
 import scanStrings from "@/locales/en/scan.json";
 
 import { SaveToHistoryModal } from "./SaveToHistoryModal";
+import { MerchantMatcher } from "./MerchantMatcher";
+import { CameraCaptureDialog } from "./CameraCaptureDialog";
+import type { MerchantCandidate } from "./merchant-types";
 
 import {
   fileSelected,
@@ -82,6 +90,8 @@ export function ScanPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [matchedMerchant, setMatchedMerchant] = useState<MerchantCandidate | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setPageLoading(false), 350);
@@ -94,7 +104,30 @@ export function ScanPage() {
     };
   }, [previewUrl]);
 
-  function upload(file: File) {
+  async function getOptionalScanLocation() {
+    if (!navigator.geolocation || !window.isSecureContext) return undefined;
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 60000,
+        });
+      });
+      return {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+      };
+    } catch {
+      // Location is enrichment only. OCR extraction must continue if the user
+      // denies access, location times out, or the device cannot provide it.
+      return undefined;
+    }
+  }
+
+  async function upload(file: File) {
+    setMatchedMerchant(null);
     lastFileRef.current = file;
     if (previewUrl) URL.revokeObjectURL(previewUrl);
 
@@ -102,7 +135,8 @@ export function ScanPage() {
     setPreviewUrl(isPdf ? null : URL.createObjectURL(file));
 
     dispatch(fileSelected(file.name));
-    dispatch(extractReceipt(file));
+    const location = await getOptionalScanLocation();
+    dispatch(extractReceipt({ file, location }));
   }
 
   function openSaveModal() {
@@ -133,7 +167,9 @@ export function ScanPage() {
     if (isTranslationFailure) {
       dispatch(translateReceipt(targetLanguage));
     } else if (lastFileRef.current) {
-      dispatch(extractReceipt(lastFileRef.current));
+      void getOptionalScanLocation().then((location) => {
+        if (lastFileRef.current) dispatch(extractReceipt({ file: lastFileRef.current, location }));
+      });
     }
   }
 
@@ -155,7 +191,10 @@ export function ScanPage() {
   // change based on which is active.
   const display = showTranslated && translatedResult ? translatedResult : result;
 
-  function renderName(originalValue: string | null | undefined, translatedValue: string | null | undefined) {
+  function renderName(
+    originalValue: string | null | undefined,
+    translatedValue: string | null | undefined,
+  ) {
     const showingTranslated = showTranslated && translatedResult;
     if (!showingTranslated || translatedValue === originalValue) {
       return <span className="font-semibold">{originalValue ?? "-"}</span>;
@@ -186,7 +225,11 @@ export function ScanPage() {
         title={t.title}
         subtitle={t.subtitle}
         actions={
-          <Button className="bg-brand rounded-xl shadow-brand" disabled>
+          <Button
+            className="bg-brand rounded-xl shadow-brand"
+            onClick={() => setCameraOpen(true)}
+            disabled={isScanning}
+          >
             <ScanLine className="h-4 w-4" />
             {t.startCamera}
           </Button>
@@ -228,9 +271,7 @@ export function ScanPage() {
               {previewUrl ? fileName : t.dropReceiptHere}
             </h2>
 
-            {!previewUrl && (
-              <p className="text-sm text-muted-foreground">{t.fileHint}</p>
-            )}
+            {!previewUrl && <p className="text-sm text-muted-foreground">{t.fileHint}</p>}
 
             <input
               ref={inputRef}
@@ -279,13 +320,24 @@ export function ScanPage() {
 
               {isTranslating ? (
                 <InlineLoading label={t.translating} />
-              ) : status === "done" && (
-                <Badge>
-                  <Check className="h-3 w-3" />
-                  {t.extracted}
-                </Badge>
+              ) : (
+                status === "done" && (
+                  <Badge>
+                    <Check className="h-3 w-3" />
+                    {t.extracted}
+                  </Badge>
+                )
               )}
             </div>
+
+            {!isScanning && result && !isMenu && (
+              <MerchantMatcher
+                receipt={result}
+                selected={matchedMerchant}
+                languageCode={profile?.language?.code}
+                onSelect={setMatchedMerchant}
+              />
+            )}
 
             <div className="overflow-y-auto">
               {isScanning && (
@@ -389,11 +441,8 @@ export function ScanPage() {
               )}
 
               {!isScanning && !result && !error && (
-                <p className="p-5 text-sm text-muted-foreground">
-                  {t.emptyState}
-                </p>
+                <p className="p-5 text-sm text-muted-foreground">{t.emptyState}</p>
               )}
-
             </div>
 
             <div className="flex shrink-0 flex-wrap items-center gap-2 border-t p-5">
@@ -443,9 +492,20 @@ export function ScanPage() {
         <SaveToHistoryModal
           open={isSaveModalOpen}
           onOpenChange={setIsSaveModalOpen}
-          receipt={result}
+          receipt={
+            matchedMerchant
+              ? { ...result, merchant: matchedMerchant.name, address: matchedMerchant.address }
+              : result
+          }
+          matchedMerchant={matchedMerchant}
         />
       )}
+
+      <CameraCaptureDialog
+        open={cameraOpen}
+        onOpenChange={setCameraOpen}
+        onCapture={(file) => void upload(file)}
+      />
 
       <Dialog
         open={!!activeErrorCode}
@@ -475,7 +535,10 @@ export function ScanPage() {
                 {t.chooseAnotherFile}
               </Button>
             )}
-            <Button onClick={retryFailedAction} disabled={!isTranslationFailure && !lastFileRef.current}>
+            <Button
+              onClick={retryFailedAction}
+              disabled={!isTranslationFailure && !lastFileRef.current}
+            >
               <RefreshCw className="h-4 w-4" />
               {t.retry}
             </Button>

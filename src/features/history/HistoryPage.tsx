@@ -30,6 +30,7 @@ import {
 import { exportExpensesToCsv } from "@/lib/csv-export";
 import type { DateRangeDays, Expense, ExpenseFormValues } from "@/features/history/types";
 import { ExpenseFormDialog } from "@/components/Expense/ExpenseFormDialog";
+import { MerchantLink } from "@/components/MerchantLink";
 
 export function HistoryPage() {
   const dispatch = useAppDispatch();
@@ -210,7 +211,7 @@ export function HistoryPage() {
 
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold">
-                    {e.shop ?? t.untitledExpense}
+                    <MerchantLink expense={e} fallback={t.untitledExpense} />
                   </span>
 
                   <span className="block truncate text-xs text-muted-foreground lg:hidden">

@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
 import { interpolate } from "@/lib/i18n";
 import { isRtlLanguage } from "@/lib/rtl";
-import { getSubscriptionDisplay } from "@/lib/subscription";
+import { getEffectiveSubscriptionStatus, getSubscriptionDisplay } from "@/lib/subscription";
 import subscriptionStrings from "@/locales/en/subscription.json";
 import subscriptionStatusStrings from "@/locales/en/subscriptionStatus.json";
-import { fetchPlans, checkoutPlan } from "@/features/subscription/subscriptionSlice";
+import { fetchPlans, checkoutPlan, verifyPayment } from "@/features/subscription/subscriptionSlice";
+import { fetchProfile } from "@/features/account/accountSlice";
 
 export function SubscriptionPage() {
   const dispatch = useAppDispatch();
@@ -27,6 +28,26 @@ export function SubscriptionPage() {
   }, [dispatch]);
 
   const { statusLabel, hint } = getSubscriptionDisplay(profile, statusT, interpolate);
+  const effectiveStatus = getEffectiveSubscriptionStatus(profile);
+  const pageTitle = effectiveStatus === "active"
+    ? t.activeTitle
+    : effectiveStatus === "trial"
+      ? t.trialTitle
+      : effectiveStatus === "cancelled"
+        ? t.cancelledTitle
+        : t.expiredTitle;
+  const pageSubtitle = effectiveStatus === "active"
+    ? t.activeSubtitle
+    : effectiveStatus === "trial"
+      ? t.trialSubtitle
+      : effectiveStatus === "cancelled"
+        ? t.cancelledSubtitle
+        : t.expiredSubtitle;
+  const subscribeLabel = effectiveStatus === "active"
+    ? t.extend
+    : effectiveStatus === "cancelled"
+      ? t.renew
+      : t.subscribe;
 
   async function handleSubscribe(planId: string) {
     setPopupError(null);
@@ -49,7 +70,7 @@ export function SubscriptionPage() {
     checkoutWindow.document.title = t.checkoutWindowTitle;
 
     try {
-      const { checkoutUrl } = await dispatch(checkoutPlan(planId)).unwrap();
+      const { paymentId, checkoutUrl } = await dispatch(checkoutPlan(planId)).unwrap();
       const url = new URL(checkoutUrl);
 
       if (url.protocol !== "https:" && url.protocol !== "http:") {
@@ -64,6 +85,40 @@ export function SubscriptionPage() {
       checkoutWindow.opener = null;
       checkoutWindow.location.replace(url.href);
       checkoutWindow.focus();
+
+      // Provider webhooks cannot reach a localhost backend and closing a
+      // cross-origin popup sends no completion event. Reconcile directly with
+      // the provider until payment succeeds/fails, including shortly after the
+      // user closes the checkout window.
+      const startedAt = Date.now();
+      const timeoutMs = 5 * 60 * 1000;
+      let checksAfterClose = 0;
+      const reconcile = window.setInterval(async () => {
+        const popupClosed = checkoutWindow.closed;
+        if (popupClosed) checksAfterClose += 1;
+
+        try {
+          const payment = await dispatch(verifyPayment(paymentId)).unwrap();
+          if (payment.status === "succeeded") {
+            window.clearInterval(reconcile);
+            await dispatch(fetchProfile());
+            return;
+          }
+          if (payment.status === "failed") {
+            window.clearInterval(reconcile);
+            setPopupError(t.checkoutFailed);
+            return;
+          }
+        } catch (error) {
+          // A temporary verification error should not lose a completed payment;
+          // continue polling until the bounded timeout below.
+        }
+
+        if (Date.now() - startedAt >= timeoutMs || checksAfterClose >= 10) {
+          window.clearInterval(reconcile);
+          await dispatch(fetchProfile());
+        }
+      }, 3000);
     } catch (checkoutError) {
       checkoutWindow.close();
       setPopupError(
@@ -82,8 +137,8 @@ export function SubscriptionPage() {
         <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-accent text-accent-foreground">
           <Clock className="h-6 w-6" />
         </span>
-        <h1 className="mt-4 font-display text-2xl font-bold">{t.title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{t.subtitle}</p>
+        <h1 className="mt-4 font-display text-2xl font-bold">{pageTitle}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{pageSubtitle}</p>
 
         <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full bg-muted px-4 py-1.5 text-sm">
           <span className="font-semibold">{statusLabel}</span>
@@ -123,7 +178,7 @@ export function SubscriptionPage() {
               ) : (
                 <>
                   <Check className="h-4 w-4" />
-                  {t.subscribe}
+                  {subscribeLabel}
                 </>
               )}
             </Button>

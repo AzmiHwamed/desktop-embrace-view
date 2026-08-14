@@ -3,10 +3,12 @@ import { useEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
+  CalendarDays,
   Layers,
   Receipt,
   ScanLine,
   TrendingUp,
+  WalletCards,
 } from "lucide-react";
 import {
   Area,
@@ -22,12 +24,19 @@ import { PageHeader } from "@/components/AppLayout";
 import { InlineLoading } from "@/components/Loading";
 import { StatCard } from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useAppDispatch, useAppSelector, useHasMounted, useTranslations } from "@/app/hooks";
-import { fetchDashboardData, fetchSpendingTrend, setRange } from "@/features/dashboard/dashboardSlice";
+import {
+  fetchDashboardData,
+  fetchSpendingTrend,
+  setRange,
+} from "@/features/dashboard/dashboardSlice";
 import type { DashboardRange } from "@/features/dashboard/types";
 import { interpolate } from "@/lib/i18n";
 import { isRtlLanguage } from "@/lib/rtl";
 import dashboardStrings from "@/locales/en/dashboard.json";
+import { MerchantLink } from "@/components/MerchantLink";
+import { useTranslatedBudgetNames } from "@/features/budgets/useTranslatedBudgetNames";
 
 export function Dashboard() {
   const dispatch = useAppDispatch();
@@ -45,6 +54,11 @@ export function Dashboard() {
     error,
   } = useAppSelector((s) => s.dashboard);
   const profile = useAppSelector((s) => s.account.profile);
+  const activeBudget = useAppSelector((s) =>
+    s.budgets.plans.find((plan) => plan.id === s.budgets.activePlanId),
+  );
+  const budgetExpenses = useAppSelector((s) => s.budgets.expenses);
+  const translatedBudgetNames = useTranslatedBudgetNames(activeBudget ? [activeBudget] : []);
   const t = useTranslations("dashboard", dashboardStrings);
 
   const isRtl = isRtlLanguage(profile?.language?.code);
@@ -63,14 +77,29 @@ export function Dashboard() {
   }, [dispatch]);
 
   const hasMounted = useHasMounted();
-  const currencyCode = hasMounted ? profile?.currency?.code ?? "" : "";
+  const currencyCode = hasMounted ? (profile?.currency?.code ?? "") : "";
   // Always "there" on server AND on the client's first paint — only swaps
   // to the real name after mount, once hydration has already succeeded.
-  const displayName = hasMounted ? profile?.displayName?.split(" ")[0] ?? "there" : "there";
+  const displayName = hasMounted ? (profile?.displayName?.split(" ")[0] ?? "there") : "there";
 
   const topCategory = byCategory[0] ?? null;
   const avgPerExpense = countThisPeriod > 0 ? spentThisPeriod / countThisPeriod : 0;
   const categoryTotal = byCategory.reduce((sum, c) => sum + c.total, 0);
+  const budgetSpent = budgetExpenses.reduce(
+    (sum, expense) => sum + Number(expense.convertedAmount ?? expense.amount ?? 0),
+    0,
+  );
+  const budgetPercent =
+    activeBudget && activeBudget.totalAmount > 0
+      ? (budgetSpent / activeBudget.totalAmount) * 100
+      : 0;
+  const budgetRemaining = activeBudget ? Math.max(0, activeBudget.totalAmount - budgetSpent) : 0;
+  const tripDaysRemaining = activeBudget
+    ? Math.max(
+        0,
+        Math.ceil((new Date(`${activeBudget.endDate}T23:59:59`).getTime() - Date.now()) / 86400000),
+      )
+    : 0;
 
   // True until both thunks have settled (fulfilled OR rejected) at least once.
   const isPageLoading = !dataLoaded || !trendLoaded;
@@ -122,6 +151,72 @@ export function Dashboard() {
         ))}
       </div>
 
+      {activeBudget ? (
+        <section className="surface-card overflow-hidden border-primary/15 bg-gradient-to-r from-primary/[0.08] to-card p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
+                <WalletCards className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-primary">{t.activeTrip}</p>
+                <h2 className="truncate font-display text-xl font-bold">
+                  {translatedBudgetNames[activeBudget.id] ?? activeBudget.name}
+                </h2>
+                <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <CalendarDays className="h-3.5 w-3.5" />
+                  {activeBudget.startDate} - {activeBudget.endDate}
+                </p>
+              </div>
+            </div>
+            <Button asChild variant="outline" className="rounded-xl">
+              <Link to="/budgets">{t.viewBudget}</Link>
+            </Button>
+          </div>
+          <div className="mt-5 flex items-end justify-between gap-4 text-sm">
+            <span>
+              {interpolate(t.budgetSpentOf, {
+                spent: `${activeBudget.currencyCode} ${budgetSpent.toFixed(2)}`,
+                total: `${activeBudget.currencyCode} ${activeBudget.totalAmount.toFixed(2)}`,
+              })}
+            </span>
+            <strong>{Math.round(budgetPercent)}%</strong>
+          </div>
+          <Progress value={Math.min(100, budgetPercent)} className="mt-2 h-2.5" />
+          <div className="mt-5 grid gap-3 border-t pt-5 sm:grid-cols-3">
+            <div>
+              <p className="text-xs text-muted-foreground">{t.tripRemaining}</p>
+              <p className="mt-1 font-bold">
+                {activeBudget.currencyCode} {budgetRemaining.toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">{t.tripDaysLeft}</p>
+              <p className="mt-1 font-bold">{tripDaysRemaining}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">{t.tripCategoryPlans}</p>
+              <p className="mt-1 font-bold">{activeBudget.categoryLimits.length}</p>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="surface-card flex flex-wrap items-center justify-between gap-4 border-dashed p-5 sm:p-6">
+          <div className="flex items-center gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <WalletCards className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="font-display font-bold">{t.noActiveTrip}</h2>
+              <p className="text-sm text-muted-foreground">{t.noActiveTripHint}</p>
+            </div>
+          </div>
+          <Button asChild className="rounded-xl">
+            <Link to="/budgets">{t.planTrip}</Link>
+          </Button>
+        </section>
+      )}
+
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label={range === "week" ? t.spentThisWeek : t.spentThisMonth}
@@ -139,7 +234,11 @@ export function Dashboard() {
         <StatCard
           label={t.avgPerExpense}
           value={`${currencyCode} ${avgPerExpense.toFixed(2)}`}
-          hint={countThisPeriod > 0 ? interpolate(t.acrossExpenses, { count: countThisPeriod }) : undefined}
+          hint={
+            countThisPeriod > 0
+              ? interpolate(t.acrossExpenses, { count: countThisPeriod })
+              : undefined
+          }
           icon={ScanLine}
         />
         <StatCard
@@ -186,7 +285,11 @@ export function Dashboard() {
                       <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="4 4" stroke="var(--color-border)" vertical={false} />
+                  <CartesianGrid
+                    strokeDasharray="4 4"
+                    stroke="var(--color-border)"
+                    vertical={false}
+                  />
                   <XAxis
                     dataKey="day"
                     tickLine={false}
@@ -292,11 +395,10 @@ export function Dashboard() {
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-semibold">
-                    {e.shop ?? e.category?.name ?? t.expense}
+                    <MerchantLink expense={e} fallback={e.category?.name ?? t.expense} />
                   </span>
                   <span className="block truncate text-xs text-muted-foreground">
-                    {e.category?.name ?? t.uncategorized} ·{" "}
-                    {new Date(e.date).toLocaleDateString()}
+                    {e.category?.name ?? t.uncategorized} · {new Date(e.date).toLocaleDateString()}
                   </span>
                 </span>
               </div>
@@ -324,7 +426,12 @@ function DashboardSkeleton({ dir }: { dir: "rtl" | "ltr" }) {
   // `dir` is threaded through (keeps the skeleton's layout mirrored to match
   // the real page instead of flashing LTR then flipping to RTL on load).
   return (
-    <div className="space-y-6 lg:space-y-8" aria-busy="true" aria-label="Loading dashboard" dir={dir}>
+    <div
+      className="space-y-6 lg:space-y-8"
+      aria-busy="true"
+      aria-label="Loading dashboard"
+      dir={dir}
+    >
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-2">
           <div className="h-6 w-56 animate-pulse rounded-md bg-muted" />

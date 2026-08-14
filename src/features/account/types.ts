@@ -1,5 +1,5 @@
 // store/account/types.ts
-export type SubscriptionStatus = "active" | "trial" | "expired" | "canceled";
+export type SubscriptionStatus = "active" | "trial" | "expired" | "cancelled" | "canceled";
 
 export type Profile = {
   id: string;

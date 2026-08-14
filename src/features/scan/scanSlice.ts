@@ -79,12 +79,26 @@ function classifyScanError(error: unknown, fallback: string): ScanFailure {
   return { code: "unknown", detail: error instanceof Error ? error.message : fallback };
 }
 
-export const extractReceipt = createAsyncThunk<Receipt, File, { rejectValue: ScanFailure }>(
+export type ExtractReceiptInput = {
+  file: File;
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  };
+};
+
+export const extractReceipt = createAsyncThunk<Receipt, ExtractReceiptInput, { rejectValue: ScanFailure }>(
   "scan/extractReceipt",
-  async (file, { rejectWithValue }) => {
+  async ({ file, location }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
       formData.append("image", file);
+      if (location) {
+        formData.append("latitude", String(location.latitude));
+        formData.append("longitude", String(location.longitude));
+        if (location.accuracy != null) formData.append("locationAccuracy", String(location.accuracy));
+      }
 
       const res = await apiFetch<ApiResponse<Receipt>>("/receipts/extract", {
         method: "POST",
@@ -100,7 +114,7 @@ export const extractReceipt = createAsyncThunk<Receipt, File, { rejectValue: Sca
 
 // Kept for backward compatibility with any existing callers.
 export async function getExpenseCategories() {
-  const res = await apiFetch<ApiResponse<any[]>>("/expense-categories");
+  const res = await apiFetch<ApiResponse<ExpenseCategory[]>>("/expense-categories");
   return res.data;
 }
 
@@ -187,6 +201,13 @@ export type SaveExpenseFromReceiptArgs = {
   description?: string;
   amount?: number;
   date?: string;
+  merchantName?: string;
+  googlePlaceId?: string;
+  merchantAddress?: string;
+  merchantLatitude?: number;
+  merchantLongitude?: number;
+  googleMapsUri?: string;
+  merchantMatchConfidence?: number;
 };
 
 export const saveExpenseFromReceipt = createAsyncThunk<

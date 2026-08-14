@@ -14,6 +14,7 @@ import { isRtlLanguage } from "@/lib/rtl";
 import expensesStrings from "@/locales/en/expenses.json";
 import { fetchExpensesOverview, setBudget, setExpenseRange } from "@/features/expenses/expensesSlice";
 import type { ExpenseRange } from "@/features/expenses/types";
+import { MerchantLink } from "@/components/MerchantLink";
 
 export function ExpensesPage() {
   const dispatch = useAppDispatch();
@@ -227,7 +228,7 @@ export function ExpensesPage() {
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold">
-                        {e.shop ?? e.category?.name ?? t.expense}
+                        <MerchantLink expense={e} fallback={e.category?.name ?? t.expense} />
                       </span>
                       <span className="block truncate text-xs text-muted-foreground">
                         {e.category?.name ?? t.uncategorized} ·{" "}

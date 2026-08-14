@@ -20,6 +20,11 @@ export type Expense = {
   convertedCurrencyId: string | null;
   date: string;
   shop: string | null;
+  googlePlaceId?: string | null;
+  merchantAddress?: string | null;
+  merchantLatitude?: string | number | null;
+  merchantLongitude?: string | number | null;
+  googleMapsUri?: string | null;
   category: ExpenseCategory | null;
   currency: ExpenseCurrency | null;
 };

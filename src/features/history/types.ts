@@ -21,6 +21,12 @@ export type Expense = {
   description: string | null; // was missing even though HistoryPage already reads it
   date: string;
   shop: string | null;
+  googlePlaceId?: string | null;
+  merchantAddress?: string | null;
+  merchantLatitude?: string | number | null;
+  merchantLongitude?: string | number | null;
+  googleMapsUri?: string | null;
+  merchantMatchConfidence?: number | null;
   category: ExpenseCategory | null;
   currency: ExpenseCurrency | null;
 };

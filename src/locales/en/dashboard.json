@@ -23,5 +23,15 @@
   "yourLatestExpenses": "Your latest expenses",
   "viewAll": "View all",
   "uncategorized": "Uncategorized",
-  "expense": "Expense"
+  "expense": "Expense",
+  "activeBudget": "Active trip budget",
+  "viewBudget": "View budget",
+  "budgetSpentOf": "{spent} spent of {total}",
+  "activeTrip": "Active trip",
+  "tripRemaining": "Budget remaining",
+  "tripDaysLeft": "Days left",
+  "tripCategoryPlans": "Category plans",
+  "noActiveTrip": "No active trip",
+  "noActiveTripHint": "Create a trip budget to track spending, limits and reminders.",
+  "planTrip": "Plan a trip"
 }

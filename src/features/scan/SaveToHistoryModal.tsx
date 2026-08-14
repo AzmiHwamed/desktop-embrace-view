@@ -31,6 +31,7 @@ import {
   saveExpenseFromReceipt,
 } from "./scanSlice";
 import type { Receipt } from "./types";
+import type { MerchantCandidate } from "./merchant-types";
 
 const NEW_CATEGORY_VALUE = "__new__";
 
@@ -38,9 +39,10 @@ type SaveToHistoryModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   receipt: Receipt;
+  matchedMerchant?: MerchantCandidate | null;
 };
 
-export function SaveToHistoryModal({ open, onOpenChange, receipt }: SaveToHistoryModalProps) {
+export function SaveToHistoryModal({ open, onOpenChange, receipt, matchedMerchant }: SaveToHistoryModalProps) {
   const dispatch = useAppDispatch();
   const t = useTranslations("scan", scanStrings);
 
@@ -90,7 +92,7 @@ export function SaveToHistoryModal({ open, onOpenChange, receipt }: SaveToHistor
 
     const suggestedDescription = recommendation?.descriptionRecommendation?.description;
     if (suggestedDescription) {
-      setDescription(suggestedDescription);
+      setDescription(matchedMerchant ? `${matchedMerchant.name} - ${suggestedDescription}` : suggestedDescription);
     }
 
     const categoryRec = recommendation?.categoryRecommendation;
@@ -103,7 +105,7 @@ export function SaveToHistoryModal({ open, onOpenChange, receipt }: SaveToHistor
       setCategoryId(NEW_CATEGORY_VALUE);
       setNewCategoryName(categoryRec.suggestedExpenseType.name);
     }
-  }, [open, recommendationStatus, recommendation]);
+  }, [open, recommendationStatus, recommendation, matchedMerchant]);
 
   const canSubmit = useMemo(() => {
     if (!description.trim() || !amount.trim()) return false;
@@ -133,6 +135,13 @@ export function SaveToHistoryModal({ open, onOpenChange, receipt }: SaveToHistor
           description: description.trim(),
           amount: Number(amount),
           date: date || undefined,
+          merchantName: matchedMerchant?.name,
+          googlePlaceId: matchedMerchant?.placeId,
+          merchantAddress: matchedMerchant?.address,
+          merchantLatitude: matchedMerchant?.latitude,
+          merchantLongitude: matchedMerchant?.longitude,
+          googleMapsUri: matchedMerchant?.googleMapsUri ?? undefined,
+          merchantMatchConfidence: matchedMerchant?.confidence,
         })
       ).unwrap();
 

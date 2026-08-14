@@ -26,10 +26,15 @@ export function useTranslations<T extends TranslationDictionary>(namespace: stri
   const languageCacheKey = profile?.languageId ?? storedLanguage?.id ?? "default";
   const key = `${namespace}:${languageCacheKey}`;
   const dict = useAppSelector((s) => s.i18n.byCacheKey[key]);
+  const loading = useAppSelector((s) => Boolean(s.i18n.loading[key]));
   // Read persisted JSON during render so startup/auth loaders do not paint in
   // English for one frame before the restoration effect runs.
   const persistedDict = dict ? null : getCachedTranslation<TranslationDictionary>(key);
   const activeDict = dict ?? persistedDict;
+  const hasMissingKeys = Object.keys(source).some((sourceKey) => {
+    const value = activeDict?.[sourceKey];
+    return typeof value !== "string" || value.length === 0;
+  });
 
   useEffect(() => {
     if (!dict) {
@@ -40,8 +45,14 @@ export function useTranslations<T extends TranslationDictionary>(namespace: stri
         // pages use the last cached JSON and otherwise fall back to English.
         dispatch(fetchTranslation({ namespace, source, languageCacheKey }));
       }
+    } else if (profile && hasMissingKeys && !loading) {
+      // Locale JSON files grow as features are added. Refresh an older cached
+      // dictionary when it does not contain every current source key so new
+      // sidebar/page labels are translated instead of permanently falling
+      // back to English.
+      dispatch(fetchTranslation({ namespace, source, languageCacheKey }));
     }
-  }, [dispatch, namespace, languageCacheKey, key, dict, persistedDict, source, profile]);
+  }, [dispatch, namespace, languageCacheKey, key, dict, persistedDict, source, profile, hasMissingKeys, loading]);
 
   // Merge rather than replace: any key missing/undefined/empty in the
   // translated dict falls back to the English source instead of crashing

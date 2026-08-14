@@ -1,6 +1,6 @@
 // pages/NotificationsPage.tsx
 import { useEffect } from "react";
-import { CheckCheck, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
+import { CheckCheck, ExternalLink, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
 
 import { PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -104,6 +104,18 @@ export function NotificationsPage() {
               <span className="min-w-0">
                 <span className="block truncate text-sm font-semibold">{n.title}</span>
                 <span className="block text-sm text-muted-foreground">{n.body}</span>
+                {n.data?.type === "nearby-place" && n.data.googleMapsUri && (
+                  <a
+                    href={n.data.googleMapsUri}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(event) => event.stopPropagation()}
+                    className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                  >
+                    {t.openDirections}
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
               </span>
               <span className="shrink-0 text-xs text-muted-foreground">{n.time}</span>
             </li>

@@ -24,6 +24,7 @@ export type AppNotification = {
   time: string;
   tone: NotificationTone;
   unread: boolean;
+  data: Record<string, string> | null;
 };
 
 export type NotificationsState = {

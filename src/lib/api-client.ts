@@ -39,6 +39,33 @@ let authenticationFailed = false;
 let redirectStarted = false;
 let refreshPromise: Promise<string> | null = null;
 
+// Firebase ID tokens expire after one hour and that lifetime is not
+// configurable. Refresh shortly before expiry so an active user keeps a
+// continuous session instead of waiting for a request to fail with 401.
+const TOKEN_REFRESH_WINDOW_MS = 5 * 60 * 1000;
+
+function tokenExpiresSoon(token: string): boolean {
+  try {
+    const payloadPart = token.split(".")[1];
+    if (!payloadPart) return false;
+
+    const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+    const payload = JSON.parse(atob(padded)) as { exp?: number };
+
+    return typeof payload.exp === "number"
+      ? payload.exp * 1000 <= Date.now() + TOKEN_REFRESH_WINDOW_MS
+      : false;
+  } catch {
+    // If a token is opaque or malformed, let the API validate it and retain
+    // the existing 401 refresh fallback.
+    return false;
+  }
+}
+
 const PUBLIC_AUTH_PATHS = new Set([
   "/auth/login",
   "/auth/register",
@@ -210,6 +237,20 @@ export async function apiFetch<T>(
 
   let token = getStoredToken();
   const refreshToken = getStoredRefreshToken();
+
+  if (
+    !isPublicAuthRequest &&
+    !isRetry &&
+    token &&
+    refreshToken &&
+    tokenExpiresSoon(token)
+  ) {
+    try {
+      token = await refreshAccessToken();
+    } catch {
+      return expireSession();
+    }
+  }
 
   // A protected request with no credentials cannot succeed. Redirect before
   // making a guaranteed-to-fail request. If only the access token is missing,

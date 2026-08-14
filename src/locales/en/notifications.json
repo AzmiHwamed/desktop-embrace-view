@@ -5,6 +5,7 @@
   "markAllRead": "Mark all read",
   "allCaughtUp": "You're up to date for now.",
   "loading": "Loading notifications…",
+  "openDirections": "Open directions",
   "stayInLoop": "Stay in the loop",
   "stayInLoopDesc": "Rate alerts fire the moment your target is hit, so you can convert at the best moment of the day.",
   "createRateAlert": "Create rate alert"

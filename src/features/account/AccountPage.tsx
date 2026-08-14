@@ -54,6 +54,7 @@ function getSubscriptionDisplay(
       const date = format(profile.subscriptionEndsAt);
       return { statusLabel: t.expired, hint: date ? interpolate(t.expiredOn, { date }) : t.noEndDate };
     }
+    case "cancelled":
     case "canceled": {
       const date = format(profile.subscriptionEndsAt);
       return { statusLabel: t.canceled, hint: date ? interpolate(t.accessUntil, { date }) : t.noEndDate };

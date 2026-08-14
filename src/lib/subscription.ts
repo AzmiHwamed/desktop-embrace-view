@@ -1,32 +1,37 @@
-// lib/subscription.ts
-
 import { Profile } from "@/features/account/types";
 
-// Single source of truth for "is this user allowed past the paywall".
-// Checks status AND the relevant end date client-side, rather than trusting
-// `subscriptionStatus` alone — the backend value can lag behind reality by
-// up to one billing-cron cycle, so a profile fetched right at the boundary
-// could still say "active"/"trial" a moment after it should have flipped.
-export function hasActiveAccess(profile: Profile | null): boolean {
-  if (!profile) return false;
+export type EffectiveSubscriptionStatus = "active" | "trial" | "expired" | "cancelled";
 
-  const now = Date.now();
+function isFuture(iso: string | null): boolean {
+  if (!iso) return false;
+  const timestamp = new Date(iso).getTime();
+  return Number.isFinite(timestamp) && timestamp > Date.now();
+}
+
+export function getEffectiveSubscriptionStatus(
+  profile: Profile | null,
+): EffectiveSubscriptionStatus | null {
+  if (!profile) return null;
 
   switch (profile.subscriptionStatus) {
     case "trial":
-      return profile.trialEndsAt ? new Date(profile.trialEndsAt).getTime() > now : true;
-
-    // Canceled still grants access through the period already paid for —
-    // same convention as "accessUntil" on the account page — so it only
-    // actually blocks once subscriptionEndsAt has passed, same check as active.
+      return isFuture(profile.trialEndsAt) ? "trial" : "expired";
     case "active":
+      return !profile.subscriptionEndsAt || isFuture(profile.subscriptionEndsAt)
+        ? "active"
+        : "expired";
+    case "cancelled":
     case "canceled":
-      return profile.subscriptionEndsAt ? new Date(profile.subscriptionEndsAt).getTime() > now : true;
-
+      return isFuture(profile.subscriptionEndsAt) ? "cancelled" : "expired";
     case "expired":
     default:
-      return false;
+      return "expired";
   }
+}
+
+export function hasActiveAccess(profile: Profile | null): boolean {
+  const status = getEffectiveSubscriptionStatus(profile);
+  return status === "active" || status === "trial" || status === "cancelled";
 }
 
 export type SubscriptionStatusStrings = {
@@ -41,9 +46,6 @@ export type SubscriptionStatusStrings = {
   noEndDate: string;
 };
 
-// Same logic that was inline in AccountPage before — pulled out here so
-// both AccountPage and the new SubscriptionPage render identical copy from
-// one shared translation namespace instead of two copies drifting apart.
 export function getSubscriptionDisplay(
   profile: Profile | null,
   t: SubscriptionStatusStrings,
@@ -52,23 +54,27 @@ export function getSubscriptionDisplay(
   if (!profile) return { statusLabel: "—", hint: "" };
 
   const format = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString() : null);
+  const effectiveStatus = getEffectiveSubscriptionStatus(profile);
 
-  switch (profile.subscriptionStatus) {
+  switch (effectiveStatus) {
     case "active": {
       const date = format(profile.subscriptionEndsAt);
-      return { statusLabel: t.active, hint: date ? interpolate(t.renewsOn, { date }) : t.noEndDate };
+      return { statusLabel: t.active, hint: date ? interpolate(t.accessUntil, { date }) : t.noEndDate };
     }
     case "trial": {
       const date = format(profile.trialEndsAt);
       return { statusLabel: t.trial, hint: date ? interpolate(t.trialEndsOn, { date }) : t.noEndDate };
     }
-    case "expired": {
-      const date = format(profile.subscriptionEndsAt);
-      return { statusLabel: t.expired, hint: date ? interpolate(t.expiredOn, { date }) : t.noEndDate };
-    }
-    case "canceled": {
+    case "cancelled": {
       const date = format(profile.subscriptionEndsAt);
       return { statusLabel: t.canceled, hint: date ? interpolate(t.accessUntil, { date }) : t.noEndDate };
+    }
+    case "expired": {
+      const expiredAt = profile.subscriptionStatus === "trial"
+        ? profile.trialEndsAt
+        : profile.subscriptionEndsAt;
+      const date = format(expiredAt);
+      return { statusLabel: t.expired, hint: date ? interpolate(t.expiredOn, { date }) : t.noEndDate };
     }
     default:
       return { statusLabel: "—", hint: "" };

@@ -28,6 +28,17 @@ export const checkoutPlan = createAsyncThunk(
   },
 );
 
+export const verifyPayment = createAsyncThunk(
+  "subscription/verifyPayment",
+  async (paymentId: string) => {
+    const res = await apiFetch<ApiResponse<{ status: "pending" | "succeeded" | "failed" }>>(
+      `/payment/${paymentId}/verify`,
+      { method: "POST" },
+    );
+    return res.data;
+  },
+);
+
 const subscriptionSlice = createSlice({
   name: "subscription",
   initialState,

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { SubscriptionPage } from "@/features/subscription/subscriptionPage";
+import { SubscriptionPage } from "@/features/subscription/SubscriptionPage";
 
 export const Route = createFileRoute("/subscribe")({
   head: () => ({

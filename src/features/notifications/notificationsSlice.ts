@@ -35,6 +35,7 @@ function resolveTone(n: ApiNotification): NotificationTone {
   const type = n.data?.type;
 
   if (type === "expense" || type === "rate-alert") return "brand";
+  if (type === "nearby-place") return "brand";
   if (type === "warning" || type === "budget") return "warning";
   if (type === "security") return "muted";
   if (type === "success") return "success";
@@ -70,6 +71,7 @@ function mapApiNotification(n: ApiNotification): AppNotification {
     time: toRelativeTime(n.createdAt),
     tone: resolveTone(n),
     unread: !n.read,
+    data: n.data,
   };
 }
 

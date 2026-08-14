@@ -11,11 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AccountRouteImport } from './routes/account'
+import { Route as BudgetsRouteImport } from './routes/budgets'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as ConvertRouteImport } from './routes/convert'
 import { Route as ExpensesRouteImport } from './routes/expenses'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as InterpreterRouteImport } from './routes/interpreter'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
@@ -33,6 +36,11 @@ const AccountRoute = AccountRouteImport.update({
   path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BudgetsRoute = BudgetsRouteImport.update({
+  id: '/budgets',
+  path: '/budgets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChatRoute = ChatRouteImport.update({
   id: '/chat',
   path: '/chat',
@@ -48,6 +56,11 @@ const ExpensesRoute = ExpensesRouteImport.update({
   path: '/expenses',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
@@ -56,6 +69,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InterpreterRoute = InterpreterRouteImport.update({
+  id: '/interpreter',
+  path: '/interpreter',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -92,11 +110,14 @@ const SubscribeRoute = SubscribeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/budgets': typeof BudgetsRoute
   '/chat': typeof ChatRoute
   '/convert': typeof ConvertRoute
   '/expenses': typeof ExpensesRoute
+  '/explore': typeof ExploreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/history': typeof HistoryRoute
+  '/interpreter': typeof InterpreterRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
@@ -107,11 +128,14 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/budgets': typeof BudgetsRoute
   '/chat': typeof ChatRoute
   '/convert': typeof ConvertRoute
   '/expenses': typeof ExpensesRoute
+  '/explore': typeof ExploreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/history': typeof HistoryRoute
+  '/interpreter': typeof InterpreterRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
@@ -123,11 +147,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/budgets': typeof BudgetsRoute
   '/chat': typeof ChatRoute
   '/convert': typeof ConvertRoute
   '/expenses': typeof ExpensesRoute
+  '/explore': typeof ExploreRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/history': typeof HistoryRoute
+  '/interpreter': typeof InterpreterRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
@@ -140,11 +167,14 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/account'
+    | '/budgets'
     | '/chat'
     | '/convert'
     | '/expenses'
+    | '/explore'
     | '/forgot-password'
     | '/history'
+    | '/interpreter'
     | '/login'
     | '/notifications'
     | '/onboarding'
@@ -155,11 +185,14 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/account'
+    | '/budgets'
     | '/chat'
     | '/convert'
     | '/expenses'
+    | '/explore'
     | '/forgot-password'
     | '/history'
+    | '/interpreter'
     | '/login'
     | '/notifications'
     | '/onboarding'
@@ -170,11 +203,14 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/account'
+    | '/budgets'
     | '/chat'
     | '/convert'
     | '/expenses'
+    | '/explore'
     | '/forgot-password'
     | '/history'
+    | '/interpreter'
     | '/login'
     | '/notifications'
     | '/onboarding'
@@ -186,11 +222,14 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRoute
+  BudgetsRoute: typeof BudgetsRoute
   ChatRoute: typeof ChatRoute
   ConvertRoute: typeof ConvertRoute
   ExpensesRoute: typeof ExpensesRoute
+  ExploreRoute: typeof ExploreRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HistoryRoute: typeof HistoryRoute
+  InterpreterRoute: typeof InterpreterRoute
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
@@ -215,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/budgets': {
+      id: '/budgets'
+      path: '/budgets'
+      fullPath: '/budgets'
+      preLoaderRoute: typeof BudgetsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chat': {
       id: '/chat'
       path: '/chat'
@@ -236,6 +282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExpensesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password': {
       id: '/forgot-password'
       path: '/forgot-password'
@@ -248,6 +301,13 @@ declare module '@tanstack/react-router' {
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/interpreter': {
+      id: '/interpreter'
+      path: '/interpreter'
+      fullPath: '/interpreter'
+      preLoaderRoute: typeof InterpreterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -298,11 +358,14 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRoute,
+  BudgetsRoute: BudgetsRoute,
   ChatRoute: ChatRoute,
   ConvertRoute: ConvertRoute,
   ExpensesRoute: ExpensesRoute,
+  ExploreRoute: ExploreRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HistoryRoute: HistoryRoute,
+  InterpreterRoute: InterpreterRoute,
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
