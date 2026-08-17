@@ -36,6 +36,7 @@ import {
 
 import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
 import { isRtlLanguage } from "@/lib/rtl";
+import { getCurrentDeviceLocation } from "@/lib/device-location";
 import scanStrings from "@/locales/en/scan.json";
 
 import { SaveToHistoryModal } from "./SaveToHistoryModal";
@@ -105,19 +106,16 @@ export function ScanPage() {
   }, [previewUrl]);
 
   async function getOptionalScanLocation() {
-    if (!navigator.geolocation || !window.isSecureContext) return undefined;
     try {
-      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 8000,
-          maximumAge: 60000,
-        });
+      const position = await getCurrentDeviceLocation({
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 60000,
       });
       return {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        accuracy: position.accuracy,
       };
     } catch {
       // Location is enrichment only. OCR extraction must continue if the user

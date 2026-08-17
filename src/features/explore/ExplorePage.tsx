@@ -19,6 +19,7 @@ import { InlineLoading } from "@/components/Loading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { isRtlLanguage } from "@/lib/rtl";
+import { DeviceLocationError, getCurrentDeviceLocation } from "@/lib/device-location";
 import exploreStrings from "@/locales/en/explore.json";
 import { exploreNearby } from "./explore.server";
 import type { ExploreCategory, ExplorePlace } from "./types";
@@ -56,15 +57,12 @@ export function ExplorePage() {
     setLoading(true);
     setError(null);
     try {
-      if (!navigator.geolocation || !window.isSecureContext) throw new Error(t.secureLocationError);
-      const location = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 12000,
-          maximumAge: 120000,
-        }),
-      );
-      const current = { latitude: location.coords.latitude, longitude: location.coords.longitude };
+      const location = await getCurrentDeviceLocation({
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 120000,
+      });
+      const current = { latitude: location.latitude, longitude: location.longitude };
       setPosition(current);
       const response = await exploreNearby({
         data: { ...current, languageCode: profile?.language?.code, radius: 10000 },
@@ -72,8 +70,10 @@ export function ExplorePage() {
       setPlaces(response.places);
     } catch (reason) {
       setError(
-        typeof reason === "object" && reason && "code" in reason
-          ? t.locationDenied
+        reason instanceof DeviceLocationError
+          ? reason.reason === "insecure"
+            ? t.secureLocationError
+            : t.locationDenied
           : reason instanceof Error
             ? reason.message
             : t.loadError,

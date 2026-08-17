@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { fetchNotifications } from "@/features/notifications/notificationsSlice";
 import { apiFetch, type ApiResponse } from "@/lib/api-client";
 import { getStoredLanguage } from "@/lib/language-preference";
+import { getCurrentDeviceLocation } from "@/lib/device-location";
 
 const CHECK_INTERVAL_MS = 60 * 60 * 1000;
 
@@ -12,20 +13,25 @@ type CheckInResult = { recommended: boolean };
 export function NearbyGuide() {
   const dispatch = useAppDispatch();
   const userId = useAppSelector((state) => state.account.profile?.id);
-  const languageCode = useAppSelector((state) => state.account.profile?.language?.code)
-    ?? getStoredLanguage()?.code
-    ?? "en";
+  const languageCode =
+    useAppSelector((state) => state.account.profile?.language?.code) ??
+    getStoredLanguage()?.code ??
+    "en";
 
   useEffect(() => {
-    if (!userId || typeof navigator === "undefined" || !("geolocation" in navigator)) return;
+    if (!userId) return;
     const storageKey = `smarttravel.nearby-check.${userId}`;
 
     const checkNearby = () => {
       const lastCheck = Number(localStorage.getItem(storageKey) ?? 0);
       if (Date.now() - lastCheck < CHECK_INTERVAL_MS) return;
 
-      navigator.geolocation.getCurrentPosition(
-        async ({ coords }) => {
+      void getCurrentDeviceLocation({
+        enableHighAccuracy: false,
+        timeout: 15000,
+        maximumAge: 5 * 60 * 1000,
+      })
+        .then(async (location) => {
           // Record the attempt only after obtaining a fresh position. A denied
           // permission can therefore be retried after the user enables it.
           localStorage.setItem(storageKey, String(Date.now()));
@@ -33,9 +39,9 @@ export function NearbyGuide() {
             const response = await apiFetch<ApiResponse<CheckInResult>>("/explore/check-in", {
               method: "POST",
               body: JSON.stringify({
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-                accuracy: coords.accuracy,
+                latitude: location.latitude,
+                longitude: location.longitude,
+                accuracy: location.accuracy,
                 languageCode: ["en", "fr", "ar"].includes(languageCode) ? languageCode : "en",
               }),
             });
@@ -43,10 +49,8 @@ export function NearbyGuide() {
           } catch {
             // Nearby discovery is optional and must never interrupt normal app use.
           }
-        },
-        () => undefined,
-        { enableHighAccuracy: false, timeout: 15000, maximumAge: 5 * 60 * 1000 },
-      );
+        })
+        .catch(() => undefined);
     };
 
     checkNearby();
