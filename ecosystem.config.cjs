@@ -5,7 +5,7 @@ module.exports = {
       script: ".output/server/index.mjs",
       cwd: __dirname,
       interpreter: "node",
-      node_args: "--env-file-if-exists=.env",
+      node_args: "--dns-result-order=ipv4first --env-file-if-exists=.env",
       exec_mode: "fork",
       instances: 1,
       autorestart: true,
@@ -16,7 +16,13 @@ module.exports = {
         NODE_ENV: "production",
         HOST: "0.0.0.0",
         PORT: 5023,
+        GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
       },
     },
   ],
 };
+
+
+
+
+
