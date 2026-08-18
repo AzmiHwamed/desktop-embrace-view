@@ -14,6 +14,12 @@ export type MerchantCandidate = {
   confidence: number;
   googleMapsUri: string | null;
   primaryType: string | null;
+  photoUri: string | null;
+  photoAttributions: Array<{
+    displayName?: string;
+    uri?: string;
+    photoUri?: string;
+  }>;
 };
 
 export type MerchantMatchResult = {

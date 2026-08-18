@@ -20,8 +20,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { isRtlLanguage } from "@/lib/rtl";
 import { DeviceLocationError, getCurrentDeviceLocation } from "@/lib/device-location";
+import { apiFetch, type ApiResponse } from "@/lib/api-client";
 import exploreStrings from "@/locales/en/explore.json";
-import { exploreNearby } from "./explore.server";
 import type { ExploreCategory, ExplorePlace } from "./types";
 
 const categoryIcons = {
@@ -64,10 +64,11 @@ export function ExplorePage() {
       });
       const current = { latitude: location.latitude, longitude: location.longitude };
       setPosition(current);
-      const response = await exploreNearby({
-        data: { ...current, languageCode: profile?.language?.code, radius: 10000 },
+      const response = await apiFetch<ApiResponse<{ places: ExplorePlace[] }>>("/explore/nearby", {
+        method: "POST",
+        body: JSON.stringify({ ...current, languageCode: profile?.language?.code, radius: 10000 }),
       });
-      setPlaces(response.places);
+      setPlaces(response.data.places);
     } catch (reason) {
       setError(
         reason instanceof DeviceLocationError
@@ -174,6 +175,38 @@ export function ExplorePage() {
                 key={place.placeId}
                 className="group overflow-hidden transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg"
               >
+                {place.photoUri && (
+                  <div className="relative">
+                    <img
+                      src={place.photoUri}
+                      alt={place.name}
+                      className="h-44 w-full object-cover"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                    {place.photoAttributions.length > 0 && (
+                      <div className="absolute bottom-1 end-1 rounded bg-black/65 px-2 py-1 text-[10px] text-white">
+                        {place.photoAttributions.map((attribution, index) =>
+                          attribution.uri ? (
+                            <a
+                              key={`${attribution.displayName ?? "Google user"}-${index}`}
+                              href={attribution.uri}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="underline"
+                            >
+                              {attribution.displayName ?? "Google user"}
+                            </a>
+                          ) : (
+                            <span key={`${attribution.displayName ?? "Google user"}-${index}`}>
+                              {attribution.displayName ?? "Google user"}
+                            </span>
+                          ),
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
                 <CardContent className="p-5">
                   <div className="flex items-start gap-3">
                     <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">

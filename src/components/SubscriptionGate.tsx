@@ -11,7 +11,7 @@ import appShellStrings from "@/locales/en/app-shell.json";
 // Routes exempt from the paywall — /subscribe itself (or the redirect
 // loops forever). Add auth-adjacent routes (login, verify-email, etc.) if
 // you have any — I don't know your route list, so this is a starting point.
-const AUTH_EXEMPT_PATHS = ["/login", "/forgot-password", "/onboarding"];
+const AUTH_EXEMPT_PATHS = ["/login", "/signup", "/forgot-password", "/onboarding"];
 
 export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();

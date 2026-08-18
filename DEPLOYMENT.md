@@ -30,16 +30,17 @@ your VPS firewall and hosting-provider security group.
 production build. Do not use `localhost` unless the API runs in each visitor's
 browser machine—which it normally does not.
 
-## Google Places merchant matching
+## Google Places
 
-Receipt merchant matching needs a server-only Google Places key. Enable
-**Places API (New)** and expose the key to PM2 at runtime. Never use a `VITE_`
-prefix for this key because that would publish it in the browser bundle:
+Nearby exploration and receipt merchant matching are handled by the NestJS API.
+Enable **Places API (New)** and set `GOOGLE_MAPS_API_KEY` only in the backend
+`translate-app` environment. The frontend process does not need this key.
 
 ```bash
+cd /home/ubuntu/translate-app
 export GOOGLE_MAPS_API_KEY="your-key"
 npm run build
-pm2 reload ecosystem.config.cjs --update-env
+pm2 restart <backend-pm2-name> --update-env
 pm2 save
 ```
 

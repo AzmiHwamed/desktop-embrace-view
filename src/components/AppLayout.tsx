@@ -34,7 +34,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
     setSessionChecked(true);
   }, [dispatch]);
 
-  const isPublicAuthPage = pathname === "/login" || pathname === "/forgot-password";
+  const isPublicAuthPage =
+    pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password";
 
   useEffect(() => {
     if (sessionChecked && !isAuthenticated && !isPublicAuthPage) {

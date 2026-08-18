@@ -24,6 +24,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ScanRouteImport } from './routes/scan'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SubscribeRouteImport } from './routes/subscribe'
 
 const IndexRoute = IndexRouteImport.update({
@@ -101,6 +102,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SubscribeRoute = SubscribeRouteImport.update({
   id: '/subscribe',
   path: '/subscribe',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof OnboardingRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/subscribe': typeof SubscribeRoute
 }
 export interface FileRoutesByTo {
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/subscribe': typeof SubscribeRoute
 }
 export interface FileRoutesById {
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/subscribe': typeof SubscribeRoute
 }
 export interface FileRouteTypes {
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/scan'
     | '/settings'
+    | '/signup'
     | '/subscribe'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/scan'
     | '/settings'
+    | '/signup'
     | '/subscribe'
   id:
     | '__root__'
@@ -216,6 +227,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/scan'
     | '/settings'
+    | '/signup'
     | '/subscribe'
   fileRoutesById: FileRoutesById
 }
@@ -235,6 +247,7 @@ export interface RootRouteChildren {
   OnboardingRoute: typeof OnboardingRoute
   ScanRoute: typeof ScanRoute
   SettingsRoute: typeof SettingsRoute
+  SignupRoute: typeof SignupRoute
   SubscribeRoute: typeof SubscribeRoute
 }
 
@@ -345,6 +358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/subscribe': {
       id: '/subscribe'
       path: '/subscribe'
@@ -371,6 +391,7 @@ const rootRouteChildren: RootRouteChildren = {
   OnboardingRoute: OnboardingRoute,
   ScanRoute: ScanRoute,
   SettingsRoute: SettingsRoute,
+  SignupRoute: SignupRoute,
   SubscribeRoute: SubscribeRoute,
 }
 export const routeTree = rootRouteImport

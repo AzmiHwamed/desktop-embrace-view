@@ -11,5 +11,11 @@ export type ExplorePlace = {
   primaryType: string | null;
   types: string[];
   googleMapsUri: string | null;
+  photoUri: string | null;
+  photoAttributions: Array<{
+    displayName?: string;
+    uri?: string;
+    photoUri?: string;
+  }>;
   category: Exclude<ExploreCategory, "all">;
 };

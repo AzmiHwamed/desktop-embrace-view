@@ -14,8 +14,8 @@ import { InlineLoading } from "@/components/Loading";
 import { useTranslations } from "@/app/hooks";
 import scanStrings from "@/locales/en/scan.json";
 import { DeviceLocationError, getCurrentDeviceLocation } from "@/lib/device-location";
-import { matchReceiptMerchant } from "./merchant-match.server";
-import type { MerchantCandidate } from "./merchant-types";
+import { apiFetch, type ApiResponse } from "@/lib/api-client";
+import type { MerchantCandidate, MerchantMatchResult } from "./merchant-types";
 import type { Receipt } from "./types";
 
 type Props = {
@@ -43,16 +43,20 @@ export function MerchantMatcher({ receipt, selected, languageCode, onSelect }: P
         timeout: 12000,
         maximumAge: 60000,
       });
-      const response = await matchReceiptMerchant({
-        data: {
-          merchantName: receipt.merchant ?? "",
-          receiptAddress: receipt.address,
-          latitude: position.latitude,
-          longitude: position.longitude,
-          languageCode,
+      const response = await apiFetch<ApiResponse<MerchantMatchResult>>(
+        "/receipts/merchant-match",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            merchantName: receipt.merchant ?? "",
+            receiptAddress: receipt.address,
+            latitude: position.latitude,
+            longitude: position.longitude,
+            languageCode,
+          }),
         },
-      });
-      setCandidates(response.candidates);
+      );
+      setCandidates(response.data.candidates);
     } catch (reason) {
       if (reason instanceof DeviceLocationError) {
         setError(t.locationError);
@@ -131,9 +135,19 @@ export function MerchantMatcher({ receipt, selected, languageCode, onSelect }: P
                   }}
                   className="flex w-full items-start gap-3 rounded-2xl border p-4 text-start transition hover:border-primary hover:bg-primary/[0.04]"
                 >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                    <MapPin className="h-4 w-4" />
-                  </span>
+                  {candidate.photoUri ? (
+                    <img
+                      src={candidate.photoUri}
+                      alt={candidate.name}
+                      className="h-14 w-14 shrink-0 rounded-xl object-cover"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                      <MapPin className="h-4 w-4" />
+                    </span>
+                  )}
                   <span className="min-w-0 flex-1">
                     <span className="block font-bold">{candidate.name}</span>
                     <span className="mt-0.5 block text-xs text-muted-foreground">
@@ -150,6 +164,15 @@ export function MerchantMatcher({ receipt, selected, languageCode, onSelect }: P
                         {candidate.confidence}% {t.match}
                       </span>
                     </span>
+                    {candidate.photoAttributions.length > 0 && (
+                      <span className="mt-1 block text-[10px] text-muted-foreground">
+                        Photo:{" "}
+                        {candidate.photoAttributions
+                          .map((item) => item.displayName)
+                          .filter(Boolean)
+                          .join(", ")}
+                      </span>
+                    )}
                   </span>
                   {candidate.googleMapsUri && (
                     <a
