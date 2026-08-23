@@ -1,6 +1,7 @@
 // pages/AccountPage.tsx
 import { useEffect, useRef, useState } from "react";
-import { LogOut, MapPin, Receipt, CreditCard } from "lucide-react";
+import { LogOut, MapPin, Receipt, CreditCard, Trash2 } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/AppLayout";
 import { StatCard } from "@/components/StatCard";
@@ -8,6 +9,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -26,6 +38,8 @@ import { fetchTranslation, resetTranslations } from "@/features/i18n/i18nSlice";
 import { storeLanguage } from "@/lib/language-preference";
 import loginStrings from "@/locales/en/login.json";
 import appShellStrings from "@/locales/en/app-shell.json";
+import { apiFetch } from "@/lib/api-client";
+import { logout } from "@/features/auth/authSlice";
 
 // Maps status -> which timestamp on the profile is the relevant one to
 // show, and which message key describes it. Trial has no fixed end in the
@@ -66,6 +80,7 @@ function getSubscriptionDisplay(
 
 export function AccountPage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const t = useTranslations("account", accountStrings);
   const {
     profile,
@@ -88,6 +103,9 @@ export function AccountPage() {
   const [languageId, setLanguageId] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -168,6 +186,23 @@ export function AccountPage() {
     }
     setImageFile(null);
     setPreviewUrl(null);
+  }
+
+  async function handleDeleteAccount() {
+    if (!profile?.email || deleteConfirmation.trim().toLowerCase() !== profile.email.toLowerCase()) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await apiFetch("/users/me", {
+        method: "DELETE",
+        body: JSON.stringify({ confirmEmail: deleteConfirmation.trim() }),
+      });
+      dispatch(logout());
+      navigate({ to: "/login", replace: true });
+    } catch (deleteAccountError) {
+      setDeleteError(deleteAccountError instanceof Error ? deleteAccountError.message : "Unable to delete account");
+      setDeleting(false);
+    }
   }
 
   const initials =
@@ -323,6 +358,46 @@ export function AccountPage() {
             <Button variant="ghost" className="rounded-xl" onClick={handleCancel} disabled={saving}>
               {t.cancel}
             </Button>
+          </div>
+
+          <div className="mt-8 border-t border-destructive/20 pt-6">
+            <h3 className="font-display text-base font-bold text-destructive">Delete account</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Permanently deletes your profile, saved data, payments, conversations, and sign-in identity.
+            </p>
+            <AlertDialog onOpenChange={(open) => { if (!open) { setDeleteConfirmation(""); setDeleteError(null); } }}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="mt-4 rounded-xl">
+                  <Trash2 className="h-4 w-4" /> Delete my account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete your account permanently?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This cannot be undone. Type <strong>{profile?.email}</strong> to confirm.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <Input
+                  type="email"
+                  value={deleteConfirmation}
+                  onChange={(event) => setDeleteConfirmation(event.target.value)}
+                  placeholder={profile?.email ?? "Email"}
+                  autoComplete="off"
+                />
+                {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={deleting || !profile?.email || deleteConfirmation.trim().toLowerCase() !== profile.email.toLowerCase()}
+                    onClick={(event) => { event.preventDefault(); void handleDeleteAccount(); }}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleting ? "Deleting…" : "Delete permanently"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </div>

@@ -17,6 +17,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const { profile, profileLoaded } = useAppSelector((s) => s.account);
+  const isGuest = useAppSelector((s) => s.auth.isGuest);
   const isAuthExempt = AUTH_EXEMPT_PATHS.some((p) =>
     location.pathname.startsWith(p),
   );
@@ -27,15 +28,15 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   // AccountPage has mounted and already triggered the fetch — it needs its
   // own trigger, guarded so it only fires once.
   useEffect(() => {
-    if (!isAuthExempt && !profileLoaded) {
+    if (!isGuest && !isAuthExempt && !profileLoaded) {
       dispatch(fetchProfile());
     }
-  }, [dispatch, isAuthExempt, profileLoaded]);
+  }, [dispatch, isGuest, isAuthExempt, profileLoaded]);
 
   // Auth and onboarding pages must render without touching protected profile
   // endpoints. Otherwise a missing session causes another 401 while the login
   // page itself is mounting, resulting in a redirect/error-boundary loop.
-  if (isAuthExempt) {
+  if (isAuthExempt || isGuest) {
     return <>{children}</>;
   }
 

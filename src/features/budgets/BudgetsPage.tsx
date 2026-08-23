@@ -11,6 +11,12 @@ import {
   Trash2,
   TrendingDown,
   Wallet,
+  Sparkles,
+  MapPin,
+  Users,
+  Landmark,
+  Clock,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,9 +36,17 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { fetchExpenseCategories } from "@/features/history/historySlice";
+import { fetchReferenceData } from "@/features/account/accountSlice";
 import { isRtlLanguage } from "@/lib/rtl";
 import { interpolate } from "@/lib/i18n";
 import budgetStrings from "@/locales/en/budgets.json";
@@ -43,17 +57,77 @@ import {
   hydrateBudgets,
   saveBudgetPlan,
   updatePlan,
+  generateTripPlan,
 } from "./budgetSlice";
 import type { BudgetCategoryLimit, BudgetDraft, BudgetExpense, BudgetPlan } from "./types";
 import { useTranslatedBudgetNames } from "./useTranslatedBudgetNames";
+
+function googleMapsUrl(place: {
+  latitude?: number | null;
+  longitude?: number | null;
+  location?: string;
+  addressHint?: string;
+  name?: string;
+  title?: string;
+  googlePlaceId?: string | null;
+  googleMapsUri?: string | null;
+}) {
+  if (place.googleMapsUri) return place.googleMapsUri;
+  const latitude = Number(place.latitude);
+  const longitude = Number(place.longitude);
+  const hasCoordinates =
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180 &&
+    !(latitude === 0 && longitude === 0);
+  if (!hasCoordinates || !place.googlePlaceId) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${latitude},${longitude}`)}&query_place_id=${encodeURIComponent(place.googlePlaceId)}`;
+}
+
+function GoogleMapsLink({
+  place,
+  label,
+}: {
+  place: Parameters<typeof googleMapsUrl>[0];
+  label: string;
+}) {
+  const url = googleMapsUrl(place);
+  if (!url) return null;
+  return (
+    <a
+      className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+    >
+      <MapPin className="h-4 w-4" />
+      {label}
+      <ExternalLink className="h-3.5 w-3.5" />
+    </a>
+  );
+}
 
 export function BudgetsPage() {
   const dispatch = useAppDispatch();
   const t = useTranslations("budgets", budgetStrings);
   const profile = useAppSelector((state) => state.account.profile);
   const categories = useAppSelector((state) => state.history.categories);
-  const { plans, activePlanId, expenses, alerts, hydrated, loadingExpenses, saving, error } =
-    useAppSelector((state) => state.budgets);
+  const countries = useAppSelector((state) => state.account.countries);
+  const referenceLoaded = useAppSelector((state) => state.account.referenceLoaded);
+  const {
+    plans,
+    activePlanId,
+    expenses,
+    alerts,
+    hydrated,
+    loadingExpenses,
+    saving,
+    generatingPlan,
+    error,
+  } = useAppSelector((state) => state.budgets);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<BudgetPlan | null>(null);
   const [viewingPlan, setViewingPlan] = useState<BudgetPlan | null>(null);
@@ -67,6 +141,9 @@ export function BudgetsPage() {
   useEffect(() => {
     if (!categories.length) dispatch(fetchExpenseCategories());
   }, [dispatch, categories.length]);
+  useEffect(() => {
+    if (!referenceLoaded) dispatch(fetchReferenceData());
+  }, [dispatch, referenceLoaded]);
   return (
     <div className="space-y-6 lg:space-y-8" dir={isRtl ? "rtl" : "ltr"}>
       <PageHeader
@@ -141,12 +218,25 @@ export function BudgetsPage() {
           translatedName={translatedBudgetNames[activePlan.id] ?? activePlan.name}
           expenses={expenses}
           loading={loadingExpenses}
+          generating={generatingPlan}
           t={t}
           onArchive={() => dispatch(archivePlan(activePlan.id))}
           onEdit={() => {
             setEditingPlan(activePlan);
             setDialogOpen(true);
           }}
+          onGenerate={() =>
+            void dispatch(generateTripPlan(activePlan.id))
+              .unwrap()
+              .then(() => toast.success(t.planGenerated))
+              .catch((generationError: unknown) =>
+                toast.error(
+                  generationError instanceof Error
+                    ? generationError.message
+                    : t.planGenerationFailed,
+                ),
+              )
+          }
         />
       ) : (
         <EmptyBudget t={t} onCreate={() => setDialogOpen(true)} />
@@ -163,9 +253,7 @@ export function BudgetsPage() {
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="font-bold">
-                          {translatedBudgetNames[plan.id] ?? plan.name}
-                        </h3>
+                        <h3 className="font-bold">{translatedBudgetNames[plan.id] ?? plan.name}</h3>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {plan.startDate} – {plan.endDate}
                         </p>
@@ -205,23 +293,28 @@ export function BudgetsPage() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         categories={categories}
+        countries={countries}
         currencyId={profile?.currencyId ?? ""}
         currencyCode={profile?.currency?.code ?? ""}
-        saving={saving}
+        saving={saving || generatingPlan}
         t={t}
         plan={editingPlan}
         onSave={async (draft) => {
-          if (editingPlan) dispatch(updatePlan({ id: editingPlan.id, draft }));
-          else await dispatch(saveBudgetPlan(draft)).unwrap();
+          if (editingPlan) await dispatch(updatePlan({ id: editingPlan.id, draft })).unwrap();
+          else {
+            const saved = await dispatch(saveBudgetPlan(draft)).unwrap();
+            await dispatch(generateTripPlan(saved.id)).unwrap();
+            toast.success(t.planGenerated);
+          }
           setDialogOpen(false);
           setEditingPlan(null);
         }}
       />
       <TripDetailsDialog
         plan={viewingPlan}
-        translatedName={viewingPlan
-          ? (translatedBudgetNames[viewingPlan.id] ?? viewingPlan.name)
-          : undefined}
+        translatedName={
+          viewingPlan ? (translatedBudgetNames[viewingPlan.id] ?? viewingPlan.name) : undefined
+        }
         t={t}
         onOpenChange={(open) => {
           if (!open) setViewingPlan(null);
@@ -259,6 +352,21 @@ export function BudgetsPage() {
           ).unwrap();
           setViewingPlan(null);
         }}
+        generating={generatingPlan}
+        onGenerate={async () => {
+          if (!viewingPlan) return;
+          try {
+            const updatedPlan = await dispatch(generateTripPlan(viewingPlan.id)).unwrap();
+            setViewingPlan(updatedPlan);
+            toast.success(t.planGenerated);
+          } catch (generationError) {
+            toast.error(
+              generationError instanceof Error
+                ? generationError.message
+                : t.planGenerationFailed,
+            );
+          }
+        }}
       />
     </div>
   );
@@ -269,17 +377,21 @@ function ActiveBudget({
   translatedName,
   expenses,
   loading,
+  generating,
   t,
   onArchive,
   onEdit,
+  onGenerate,
 }: {
   plan: BudgetPlan;
   translatedName: string;
   expenses: BudgetExpense[];
   loading: boolean;
+  generating: boolean;
   t: typeof budgetStrings;
   onArchive: () => void;
   onEdit: () => void;
+  onGenerate: () => void;
 }) {
   const today = new Date();
   const start = new Date(`${plan.startDate}T00:00:00`);
@@ -290,10 +402,12 @@ function ActiveBudget({
     Math.min(totalDays, Math.ceil((today.getTime() - start.getTime()) / 86400000) + 1),
   );
   const daysRemaining = Math.max(0, Math.ceil((end.getTime() - today.getTime()) / 86400000));
-  const spent = expenses.reduce(
-    (sum, expense) => sum + Number(expense.convertedAmount ?? expense.amount ?? 0),
-    0,
-  );
+  const spent =
+    plan.spent ??
+    expenses.reduce(
+      (sum, expense) => sum + Number(expense.convertedAmount ?? expense.amount ?? 0),
+      0,
+    );
   const remaining = Math.max(0, plan.totalAmount - spent);
   const percentage = plan.totalAmount > 0 ? (spent / plan.totalAmount) * 100 : 0;
   const safeDaily = daysRemaining > 0 ? remaining / daysRemaining : remaining;
@@ -336,8 +450,23 @@ function ActiveBudget({
                 <CalendarDays className="h-4 w-4" />
                 {plan.startDate} – {plan.endDate}
               </p>
+              <p className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  {plan.destination}
+                  {plan.country ? `, ${plan.country}` : ""}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  {plan.travelers}
+                </span>
+              </p>
             </div>
             <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={onGenerate} disabled={generating}>
+                <Sparkles className="h-4 w-4" />
+                {generating ? t.planning : plan.itinerary.length ? t.refreshPlan : t.generatePlan}
+              </Button>
               <Button variant="outline" size="sm" onClick={onEdit}>
                 <Pencil className="h-4 w-4" />
                 {t.edit}
@@ -382,6 +511,130 @@ function ActiveBudget({
           hint={pace}
         />
       </section>
+      {(plan.budgetGuidance || plan.aiSummary) && (
+        <Card className="border-primary/20 bg-primary/[0.04]">
+          <CardContent className="p-5">
+            <div className="flex items-start gap-3">
+              <Sparkles className="mt-1 h-5 w-5 text-primary" />
+              <div>
+                <h3 className="font-display text-lg font-bold">{t.smartGuidance}</h3>
+                {plan.aiSummary && (
+                  <p className="mt-1 text-sm text-muted-foreground">{plan.aiSummary}</p>
+                )}
+                {plan.budgetGuidance && (
+                  <>
+                    <p className="mt-3 font-semibold">{plan.budgetGuidance.headline}</p>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <Metric
+                        icon={Wallet}
+                        label={t.aiDailyTarget}
+                        value={`${plan.currencyCode} ${Number(plan.budgetGuidance.dailyTarget).toFixed(2)}`}
+                      />
+                      <Metric
+                        icon={Target}
+                        label={t.aiProjectedTotal}
+                        value={`${plan.currencyCode} ${Number(plan.budgetGuidance.projectedTotal).toFixed(2)}`}
+                      />
+                    </div>
+                    <ul className="mt-4 list-disc space-y-1 ps-5 text-sm">
+                      {plan.budgetGuidance.tips.map((tip) => (
+                        <li key={tip}>{tip}</li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {plan.monuments.length > 0 && (
+        <Card>
+          <CardContent className="p-5">
+            <h3 className="flex items-center gap-2 font-display text-lg font-bold">
+              <Landmark className="h-5 w-5 text-primary" />
+              {t.monumentsToSee}
+            </h3>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {plan.monuments.map((place) => (
+                <div key={place.name} className="rounded-2xl border p-4">
+                  <div className="flex justify-between gap-3">
+                    <h4 className="font-bold">{place.name}</h4>
+                    <span className="text-sm font-semibold">
+                      {plan.currencyCode} {Number(place.estimatedCost).toFixed(2)}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">{place.description}</p>
+                  {place.formattedAddress && (
+                    <p className="mt-2 flex items-start gap-1.5 text-xs font-medium text-muted-foreground">
+                      <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      {place.formattedAddress}
+                    </p>
+                  )}
+                  <p className="mt-2 flex gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5" />
+                      {place.recommendedDurationMinutes} min
+                    </span>
+                    {place.bestTime && <span>{place.bestTime}</span>}
+                  </p>
+                  <GoogleMapsLink place={place} label={t.openInMaps} />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      <Card>
+        <CardContent className="p-5">
+          <h3 className="font-display text-lg font-bold">{t.itinerary}</h3>
+          {plan.itinerary.length > 0 ? (
+            <div className="mt-4 space-y-5">
+              {plan.itinerary.map((day) => (
+                <section key={`${day.day}-${day.date}`}>
+                  <h4 className="font-bold">
+                    {t.day} {day.day}: {day.title}{" "}
+                    <span className="text-sm font-normal text-muted-foreground">· {day.date}</span>
+                  </h4>
+                  <div className="mt-2 space-y-2 border-s-2 border-primary/20 ps-4">
+                    {day.items.map((item, index) => (
+                      <div key={`${item.time}-${index}`} className="rounded-xl bg-muted/40 p-3">
+                        <div className="flex justify-between gap-3">
+                          <strong>
+                            {item.time} · {item.title}
+                          </strong>
+                          <span className="text-sm">
+                            {plan.currencyCode} {Number(item.estimatedCost).toFixed(2)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{item.description}</p>
+                        <p className="mt-1 flex items-start gap-1.5 text-xs font-medium text-muted-foreground">
+                          <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          <span>
+                            {item.recommendedPlaceName ?? item.monumentName ?? item.location}
+                            {item.formattedAddress && (
+                              <span className="block font-normal">{item.formattedAddress}</span>
+                            )}
+                          </span>
+                        </p>
+                        <GoogleMapsLink place={item} label={t.openInMaps} />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-dashed p-5 text-center">
+              <p className="text-sm text-muted-foreground">{t.noItinerary}</p>
+              <Button className="mt-3" variant="outline" onClick={onGenerate} disabled={generating}>
+                <Sparkles className="h-4 w-4" />
+                {generating ? t.planning : t.generatePlan}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
       <section className="grid gap-4 xl:grid-cols-2">
         <Card>
           <CardContent className="p-5">
@@ -498,6 +751,7 @@ function BudgetDialog({
   open,
   onOpenChange,
   categories,
+  countries,
   currencyId,
   currencyCode,
   saving,
@@ -508,6 +762,7 @@ function BudgetDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categories: { id: string; name: string; color: string }[];
+  countries: { id: string; name: string; flag?: string }[];
   currencyId: string;
   currencyCode: string;
   saving: boolean;
@@ -517,6 +772,11 @@ function BudgetDialog({
 }) {
   const today = new Date().toISOString().slice(0, 10);
   const [name, setName] = useState("");
+  const [destination, setDestination] = useState("");
+  const [countryId, setCountryId] = useState("");
+  const [travelers, setTravelers] = useState("1");
+  const [interests, setInterests] = useState("");
+  const [notes, setNotes] = useState("");
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
   const [total, setTotal] = useState("");
@@ -530,6 +790,11 @@ function BudgetDialog({
   useEffect(() => {
     if (!open) return;
     setName(plan?.name ?? "");
+    setDestination(plan?.destination ?? "");
+    setCountryId(plan?.countryId ?? "");
+    setTravelers(String(plan?.travelers ?? 1));
+    setInterests((plan?.interests ?? []).join(", "));
+    setNotes(plan?.notes ?? "");
     setStartDate(plan?.startDate ?? today);
     setEndDate(plan?.endDate ?? today);
     setTotal(plan ? String(plan.totalAmount) : "");
@@ -572,6 +837,15 @@ function BudgetDialog({
       }));
     await onSave({
       name: name.trim(),
+      destination: destination.trim(),
+      countryId: countryId || null,
+      country: countries.find((country) => country.id === countryId)?.name ?? plan?.country ?? null,
+      travelers: Math.max(1, Number(travelers)),
+      interests: interests
+        .split(",")
+        .map((value) => value.trim())
+        .filter(Boolean),
+      notes: notes.trim() || null,
       startDate,
       endDate,
       totalAmount: Number(total),
@@ -596,6 +870,56 @@ function BudgetDialog({
               onChange={(event) => setName(event.target.value)}
               placeholder={t.tripNamePlaceholder}
             />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>{t.destination}</Label>
+              <Input
+                value={destination}
+                onChange={(event) => setDestination(event.target.value)}
+                placeholder={t.destinationPlaceholder}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t.country}</Label>
+              <Select value={countryId} onValueChange={setCountryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t.selectCountry} />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map((country) => (
+                    <SelectItem key={country.id} value={country.id}>
+                      {country.flag ? `${country.flag} ` : ""}
+                      {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>{t.travelers}</Label>
+              <Input
+                type="number"
+                min="1"
+                max="50"
+                value={travelers}
+                onChange={(event) => setTravelers(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t.interests}</Label>
+              <Input
+                value={interests}
+                onChange={(event) => setInterests(event.target.value)}
+                placeholder={t.interestsHint}
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>{t.tripNotes}</Label>
+            <Input value={notes} onChange={(event) => setNotes(event.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
@@ -627,33 +951,12 @@ function BudgetDialog({
               onChange={(event) => setTotal(event.target.value)}
             />
           </div>
-          <div>
-            <h3 className="font-semibold">{t.categoryLimits}</h3>
-            <p className="text-xs text-muted-foreground">{t.categoryLimitsHint}</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {categories.map((category) => (
-                <label
-                  key={category.id}
-                  className="flex items-center gap-2 rounded-xl border p-2.5"
-                >
-                  <span
-                    className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ backgroundColor: category.color }}
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm">{category.name}</span>
-                  <Input
-                    className="h-8 w-24"
-                    type="number"
-                    min="0"
-                    placeholder="0"
-                    value={limits[category.id] ?? ""}
-                    onChange={(event) =>
-                      setLimits((current) => ({ ...current, [category.id]: event.target.value }))
-                    }
-                  />
-                </label>
-              ))}
-            </div>
+          <div className="rounded-2xl border border-primary/20 bg-primary/[0.05] p-4">
+            <h3 className="flex items-center gap-2 font-semibold">
+              <Sparkles className="h-4 w-4 text-primary" />
+              {t.aiCategoryLimits}
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">{t.aiCategoryLimitsHint}</p>
           </div>
           <div>
             <h3 className="font-semibold">{t.reminders}</h3>
@@ -693,7 +996,14 @@ function BudgetDialog({
           </Button>
           <Button
             onClick={submit}
-            disabled={saving || !name.trim() || Number(total) <= 0 || !currencyId}
+            disabled={
+              saving ||
+              !name.trim() ||
+              !destination.trim() ||
+              !countryId ||
+              Number(total) <= 0 ||
+              !currencyId
+            }
           >
             {saving ? t.saving : plan ? t.saveChanges : t.saveBudget}
           </Button>
@@ -732,6 +1042,8 @@ function TripDetailsDialog({
   onEdit,
   onActivate,
   onDuplicate,
+  onGenerate,
+  generating,
 }: {
   plan: BudgetPlan | null;
   translatedName?: string;
@@ -740,16 +1052,19 @@ function TripDetailsDialog({
   onEdit: () => void;
   onActivate: () => void;
   onDuplicate: () => Promise<void>;
+  onGenerate: () => Promise<void>;
+  generating: boolean;
 }) {
   return (
     <Dialog open={!!plan} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         {plan && (
           <>
             <DialogHeader>
               <DialogTitle>{translatedName ?? plan.name}</DialogTitle>
               <DialogDescription>
-                {plan.startDate} - {plan.endDate}
+                {plan.destination}
+                {plan.country ? `, ${plan.country}` : ""} · {plan.startDate} - {plan.endDate}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -769,6 +1084,55 @@ function TripDetailsDialog({
                       : t.completed}
                 </p>
               </div>
+            </div>
+            <div>
+              <h3 className="flex items-center gap-2 font-semibold">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                {t.itinerary}
+              </h3>
+              {plan.itinerary.length ? (
+                <div className="mt-3 space-y-4">
+                  {plan.itinerary.map((day) => (
+                    <section key={`${day.day}-${day.date}`} className="rounded-2xl border p-4">
+                      <h4 className="font-bold">
+                        {t.day} {day.day}: {day.title}
+                      </h4>
+                      <p className="text-xs text-muted-foreground">{day.date}</p>
+                      <div className="mt-3 space-y-2">
+                        {day.items.map((item, index) => (
+                          <div
+                            key={`${item.time}-${index}`}
+                            className="grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-xl bg-muted/50 p-3"
+                          >
+                            <span className="text-sm font-bold text-primary">{item.time}</span>
+                            <div>
+                              <div className="flex justify-between gap-3">
+                                <p className="font-semibold">{item.title}</p>
+                                <span className="shrink-0 text-sm">
+                                  {plan.currencyCode} {Number(item.estimatedCost).toFixed(2)}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{item.description}</p>
+                              <p className="mt-1 flex items-start gap-1.5 text-xs font-medium text-muted-foreground">
+                                <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                                <span>
+                                  {item.recommendedPlaceName ?? item.monumentName ?? item.location}
+                                  {item.formattedAddress && (
+                                    <span className="block font-normal">{item.formattedAddress}</span>
+                                  )}
+                                </span>
+                              </p>
+                              <GoogleMapsLink place={item} label={t.openInMaps} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">{t.noItinerary}</p>
+              )}
             </div>
             <div>
               <h3 className="font-semibold">{t.categoryLimits}</h3>
@@ -807,6 +1171,10 @@ function TripDetailsDialog({
               </p>
             </div>
             <DialogFooter className="flex-wrap gap-2">
+              <Button variant="outline" onClick={() => void onGenerate()} disabled={generating}>
+                <Sparkles className="h-4 w-4" />
+                {generating ? t.planning : plan.itinerary.length ? t.refreshPlan : t.generatePlan}
+              </Button>
               <Button variant="outline" onClick={onEdit}>
                 <Pencil className="h-4 w-4" />
                 {t.edit}

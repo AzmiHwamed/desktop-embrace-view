@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { clearAuthError, register, loginWithProvider } from "./authSlice";
+import { clearAuthError, continueAsGuest, register, loginWithProvider } from "./authSlice";
 import { usePostAuthRedirect } from "./usePostAuthRedirect";
 
 export function SignupPage() {
@@ -152,6 +152,17 @@ export function SignupPage() {
                 Sign in
               </Link>
             </p>
+            <Button
+              type="button"
+              variant="ghost"
+              className="mt-3 w-full rounded-xl"
+              onClick={() => {
+                dispatch(continueAsGuest());
+                window.location.assign("/scan");
+              }}
+            >
+              Continue as guest
+            </Button>
           </CardContent>
         </Card>
       </div>

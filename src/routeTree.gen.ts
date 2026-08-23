@@ -26,6 +26,7 @@ import { Route as ScanRouteImport } from './routes/scan'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SubscribeRouteImport } from './routes/subscribe'
+import { Route as ExplorePlacePlaceIdRouteImport } from './routes/explore_.place.$placeId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -112,6 +113,11 @@ const SubscribeRoute = SubscribeRouteImport.update({
   path: '/subscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExplorePlacePlaceIdRoute = ExplorePlacePlaceIdRouteImport.update({
+  id: '/explore_/place/$placeId',
+  path: '/explore/place/$placeId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -131,6 +137,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/subscribe': typeof SubscribeRoute
+  '/explore/place/$placeId': typeof ExplorePlacePlaceIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/subscribe': typeof SubscribeRoute
+  '/explore/place/$placeId': typeof ExplorePlacePlaceIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/subscribe': typeof SubscribeRoute
+  '/explore_/place/$placeId': typeof ExplorePlacePlaceIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/subscribe'
+    | '/explore/place/$placeId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/subscribe'
+    | '/explore/place/$placeId'
   id:
     | '__root__'
     | '/'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/signup'
     | '/subscribe'
+    | '/explore_/place/$placeId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -249,6 +261,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   SubscribeRoute: typeof SubscribeRoute
+  ExplorePlacePlaceIdRoute: typeof ExplorePlacePlaceIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -372,6 +385,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/explore_/place/$placeId': {
+      id: '/explore_/place/$placeId'
+      path: '/explore/place/$placeId'
+      fullPath: '/explore/place/$placeId'
+      preLoaderRoute: typeof ExplorePlacePlaceIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -393,6 +413,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   SubscribeRoute: SubscribeRoute,
+  ExplorePlacePlaceIdRoute: ExplorePlacePlaceIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

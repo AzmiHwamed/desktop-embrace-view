@@ -42,6 +42,7 @@ export function AppSidebar() {
 
   const t = useTranslations("sidebar", sidebarStrings);
   const profile = useAppSelector((s) => s.account.profile);
+  const isGuest = useAppSelector((s) => s.auth.isGuest);
   const isRtl = isRtlLanguage(profile?.language?.code);
 
   // Keys stay stable/English for routing and `key` props, since a link's
@@ -56,7 +57,7 @@ export function AppSidebar() {
     { key: "history", title: t.history, url: "/history", icon: History },
     { key: "expenses", title: t.expenses, url: "/expenses", icon: PieChart },
     { key: "budgets", title: t.budgets, url: "/budgets", icon: WalletCards },
-  ];
+  ].filter((item) => !isGuest || ["scan", "convert", "interpreter", "explore"].includes(item.key));
 
   const accountItems = [
     { key: "notifications", title: t.notifications, url: "/notifications", icon: Bell },
@@ -108,41 +109,49 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>{t.account}</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {accountItems.map((item) => (
-                <SidebarMenuItem key={item.key}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-                    <Link to={item.url}>
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {!isGuest && (
+          <SidebarGroup>
+            <SidebarGroupLabel>{t.account}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {accountItems.map((item) => (
+                  <SidebarMenuItem key={item.key}>
+                    <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+                      <Link to={item.url}>
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-3">
         {!collapsed ? (
           <div className="bg-night rounded-2xl p-4 text-sidebar-primary-foreground">
-            <LifeBuoy className="h-5 w-5 opacity-80" />
-            <p className="mt-2 text-sm font-semibold">{t.needAHand}</p>
-            <p className="mt-1 text-xs opacity-70">{t.supportBlurb}</p>
+            {isGuest ? (
+              <UserRound className="h-5 w-5 opacity-80" />
+            ) : (
+              <LifeBuoy className="h-5 w-5 opacity-80" />
+            )}
+            <p className="mt-2 text-sm font-semibold">{isGuest ? "Guest mode" : t.needAHand}</p>
+            <p className="mt-1 text-xs opacity-70">
+              {isGuest ? "Sign in to save your activity and unlock every feature." : t.supportBlurb}
+            </p>
             <Link
-              to="/settings"
+              to={isGuest ? "/login" : "/settings"}
               className="mt-3 inline-flex rounded-lg bg-sidebar/15 px-3 py-1.5 text-xs font-semibold backdrop-blur"
             >
-              {t.helpCenter}
+              {isGuest ? "Sign in to unlock all features" : t.helpCenter}
             </Link>
           </div>
         ) : (
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-sidebar-accent text-sidebar-accent-foreground">
-            <LifeBuoy className="h-4 w-4" />
+            {isGuest ? <UserRound className="h-4 w-4" /> : <LifeBuoy className="h-4 w-4" />}
           </div>
         )}
       </SidebarFooter>

@@ -21,10 +21,11 @@ export function TopNav({ isAuthenticated = false }: { isAuthenticated?: boolean 
   const navigate = useNavigate();
   const statusT = useTranslations("subscriptionStatus", subscriptionStatusStrings);
   const t = useTranslations("topnav", topNavStrings);
+  const isGuest = useAppSelector((s) => s.auth.isGuest);
 
   useEffect(() => {
-    dispatch(fetchProfile());
-  }, [dispatch]);
+    if (!isGuest) dispatch(fetchProfile());
+  }, [dispatch, isGuest]);
   const {
     profile,
   } = useAppSelector((s) => s.account);
@@ -98,7 +99,7 @@ export function TopNav({ isAuthenticated = false }: { isAuthenticated?: boolean 
             </Link>
           </Button>
 
-          {isAuthenticated ? (
+          {isAuthenticated && !isGuest ? (
             <>
               <Link to="/account" className="flex min-w-0 items-center gap-2 rounded-xl px-1 py-1">
                 <Avatar className="h-9 w-9 shrink-0">

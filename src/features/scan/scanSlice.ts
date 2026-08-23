@@ -100,7 +100,8 @@ export const extractReceipt = createAsyncThunk<Receipt, ExtractReceiptInput, { r
         if (location.accuracy != null) formData.append("locationAccuracy", String(location.accuracy));
       }
 
-      const res = await apiFetch<ApiResponse<Receipt>>("/receipts/extract", {
+      const guest = typeof window !== "undefined" && window.localStorage.getItem("smarttravel.guest") === "true";
+      const res = await apiFetch<ApiResponse<Receipt>>(guest ? "/guest/receipts/extract" : "/receipts/extract", {
         method: "POST",
         body: formData,
       });
@@ -174,8 +175,9 @@ export const translateReceipt = createAsyncThunk<
   if (!result) return rejectWithValue({ code: "unknown", detail: "Nothing to translate yet" });
 
   try {
+    const guest = typeof window !== "undefined" && window.localStorage.getItem("smarttravel.guest") === "true";
     const res = await apiFetch<ApiResponse<{ data: Receipt }> | { data: Receipt }>(
-      "/translation/json",
+      guest ? "/guest/translation/json" : "/translation/json",
       {
         method: "POST",
         body: JSON.stringify({
@@ -200,6 +202,7 @@ export type SaveExpenseFromReceiptArgs = {
   categoryId: string;
   description?: string;
   amount?: number;
+  amountCurrencyId?: string;
   date?: string;
   merchantName?: string;
   googlePlaceId?: string;

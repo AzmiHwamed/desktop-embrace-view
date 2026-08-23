@@ -55,6 +55,7 @@ export type AuthState = {
   token: string | null;
   status: AuthStatus;
   error: string | null;
+  isGuest: boolean;
   resetFlow: ResetFlowState;
 };
 

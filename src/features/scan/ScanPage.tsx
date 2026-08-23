@@ -83,6 +83,7 @@ export function ScanPage() {
     showTranslated,
   } = useAppSelector((state) => state.scan);
   const profile = useAppSelector((s) => s.account.profile);
+  const isGuest = useAppSelector((s) => s.auth.isGuest);
   const homeCurrencyCode = useAppSelector((state) => state.account.profile?.currency?.code);
   const languages = useAppSelector((state) => state.account.languages);
 
@@ -444,9 +445,11 @@ export function ScanPage() {
             </div>
 
             <div className="flex shrink-0 flex-wrap items-center gap-2 border-t p-5">
-              <Button disabled={!result} onClick={openSaveModal}>
-                {t.saveToHistory}
-              </Button>
+              {!isGuest && (
+                <Button disabled={!result} onClick={openSaveModal}>
+                  {t.saveToHistory}
+                </Button>
+              )}
 
               <Select
                 value={targetLanguage}

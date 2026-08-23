@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-import { clearAuthError, login, loginWithProvider } from "./authSlice";
+import { clearAuthError, continueAsGuest, login, loginWithProvider } from "./authSlice";
 import { usePostAuthRedirect } from "./usePostAuthRedirect";
 import loginStrings from "@/locales/en/login.json";
 import { getStoredLanguage } from "@/lib/language-preference";
@@ -39,6 +39,11 @@ export function LoginPage() {
   const onFacebook = () => {
     dispatch(clearAuthError());
     dispatch(loginWithProvider("facebook.com"));
+  };
+
+  const onGuest = () => {
+    dispatch(continueAsGuest());
+    window.location.assign("/scan");
   };
 
   return (
@@ -145,6 +150,9 @@ export function LoginPage() {
               >
                 {status === "loading" && <Loader2 className="h-4 w-4 animate-spin" />}
                 {status === "loading" ? t.signingIn : t.signIn}
+              </Button>
+              <Button type="button" variant="outline" className="h-11 w-full rounded-xl" onClick={onGuest}>
+                Continue as guest
               </Button>
             </form>
 

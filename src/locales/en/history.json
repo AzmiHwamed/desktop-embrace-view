@@ -30,5 +30,7 @@
   "saving": "Saving…",
   "saveChanges": "Save changes",
   "createCategoryError": "Could not create the category.",
-  "refreshingExpenses": "Refreshing expenses…"
+  "refreshingExpenses": "Refreshing expenses…",
+  "trip": "Trip",
+  "noTrip": "No trip"
 }

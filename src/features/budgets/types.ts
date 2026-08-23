@@ -18,6 +18,12 @@ export type BudgetReminderSettings = {
 export type BudgetPlan = {
   id: string;
   name: string;
+  destination: string;
+  country?: string | null;
+  countryId?: string | null;
+  notes?: string | null;
+  travelers: number;
+  interests: string[];
   startDate: string;
   endDate: string;
   currencyId: string;
@@ -30,7 +36,55 @@ export type BudgetPlan = {
   lastDailyReminderDate: string | null;
   createdAt: string;
   updatedAt: string;
+  spent?: number;
+  aiSummary?: string | null;
+  budgetGuidance?: BudgetGuidance | null;
+  monuments: TripMonument[];
+  itinerary: ItineraryDay[];
 };
+
+export type BudgetGuidance = {
+  status: "under_budget" | "on_track" | "at_risk" | "over_budget";
+  headline: string;
+  dailyTarget: number;
+  projectedTotal: number;
+  tips: string[];
+};
+
+export type TripMonument = {
+  name: string;
+  description: string;
+  category: string;
+  estimatedCost: number;
+  recommendedDurationMinutes: number;
+  addressHint?: string;
+  bestTime?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  googlePlaceId?: string | null;
+  googleMapsUri?: string | null;
+  formattedAddress?: string | null;
+  recommendedPlaceName?: string | null;
+};
+
+export type ItineraryItem = {
+  time: string;
+  title: string;
+  description: string;
+  location: string;
+  estimatedCost: number;
+  monumentName?: string;
+  placeSearchQuery?: string;
+  placeType?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  googlePlaceId?: string | null;
+  googleMapsUri?: string | null;
+  formattedAddress?: string | null;
+  recommendedPlaceName?: string | null;
+};
+
+export type ItineraryDay = { day: number; date: string; title: string; items: ItineraryItem[] };
 
 export type BudgetExpense = {
   id: string;
@@ -67,8 +121,22 @@ export type BudgetsState = {
   hydrated: boolean;
   loadingExpenses: boolean;
   saving: boolean;
+  generatingPlan: boolean;
   error: string | null;
   storageOwnerId: string | null;
 };
 
-export type BudgetDraft = Omit<BudgetPlan, "id" | "status" | "notifiedThresholds" | "lastDailyReminderDate" | "createdAt" | "updatedAt">;
+export type BudgetDraft = Omit<
+  BudgetPlan,
+  | "id"
+  | "status"
+  | "notifiedThresholds"
+  | "lastDailyReminderDate"
+  | "createdAt"
+  | "updatedAt"
+  | "spent"
+  | "aiSummary"
+  | "budgetGuidance"
+  | "monuments"
+  | "itinerary"
+>;

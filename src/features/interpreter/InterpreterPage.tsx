@@ -33,6 +33,7 @@ const FALLBACK_LANGUAGES: Language[] = [
 export function InterpreterPage() {
   const t = useTranslations("interpreter", strings);
   const profile = useAppSelector((state) => state.account.profile);
+  const isGuest = useAppSelector((state) => state.auth.isGuest);
   const isRtl = isRtlLanguage(profile?.language?.code);
   const [travelerLanguage, setTravelerLanguage] = useState("ar");
   const [localLanguage, setLocalLanguage] = useState("en");
@@ -49,9 +50,11 @@ export function InterpreterPage() {
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    apiFetch<ApiResponse<InterpreterConversation[]>>("/interpreter/conversations")
-      .then((response) => setConversations(response.data))
-      .catch(() => toast.error(t.loadFailed));
+    if (!isGuest) {
+      apiFetch<ApiResponse<InterpreterConversation[]>>("/interpreter/conversations")
+        .then((response) => setConversations(response.data))
+        .catch(() => toast.error(t.loadFailed));
+    }
     apiFetch<ApiResponse<Language[]>>("/languages")
       .then((response) => setLanguages(response.data))
       .catch(() => {
@@ -60,7 +63,7 @@ export function InterpreterPage() {
       })
       .finally(() => setLanguagesLoading(false));
     return () => streamRef.current?.getTracks().forEach((track) => track.stop());
-  }, [t.loadFailed]);
+  }, [isGuest, t.loadFailed]);
 
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -68,6 +71,19 @@ export function InterpreterPage() {
 
   async function ensureConversation(): Promise<InterpreterConversation> {
     if (conversation) return conversation;
+    if (isGuest) {
+      const created: InterpreterConversation = {
+        id: "guest",
+        travelerLanguage,
+        localLanguage,
+        title: null,
+        turns: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setConversation(created);
+      return created;
+    }
     const response = await apiFetch<ApiResponse<InterpreterConversation>>("/interpreter/conversations", {
       method: "POST",
       body: JSON.stringify({ travelerLanguage, localLanguage }),
@@ -144,7 +160,7 @@ export function InterpreterPage() {
       form.append("sourceLanguage", sourceLanguage);
       form.append("targetLanguage", targetLanguage);
       const response = await apiFetch<ApiResponse<InterpreterTurn>>(
-        `/interpreter/conversations/${active.id}/turns`,
+        isGuest ? "/guest/interpreter/turn" : `/interpreter/conversations/${active.id}/turns`,
         { method: "POST", body: form },
       );
       setConversation((current) => current
@@ -443,7 +459,7 @@ function formatMessageTime(value: string) {
 }
 
 function audioUrl(path: string) {
-  return path.startsWith("http") ? path : `${API_BASE_URL}${path}`;
+  return path.startsWith("http") || path.startsWith("data:") ? path : `${API_BASE_URL}${path}`;
 }
 
 function languageName(code: string, languages: Language[]) {

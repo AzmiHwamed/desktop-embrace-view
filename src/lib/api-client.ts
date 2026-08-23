@@ -1,7 +1,6 @@
 // lib/api-client.ts
 
-export const API_BASE_URL =
-  import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3000";
+export const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3000";
 
 export const TOKEN_STORAGE_KEY = "smarttravel.token";
 export const REFRESH_TOKEN_STORAGE_KEY = "smarttravel.refreshToken";
@@ -50,10 +49,7 @@ function tokenExpiresSoon(token: string): boolean {
     if (!payloadPart) return false;
 
     const normalized = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized.padEnd(
-      normalized.length + ((4 - (normalized.length % 4)) % 4),
-      "=",
-    );
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), "=");
     const payload = JSON.parse(atob(padded)) as { exp?: number };
 
     return typeof payload.exp === "number"
@@ -75,14 +71,26 @@ const PUBLIC_AUTH_PATHS = new Set([
   "/auth/reset-password",
 ]);
 
-function isPublicAuthPath(path: string): boolean {
-  return PUBLIC_AUTH_PATHS.has(path.split("?")[0]);
+function isPublicPath(path: string, method = "GET"): boolean {
+  const pathname = path.split("?")[0];
+  if (PUBLIC_AUTH_PATHS.has(pathname)) return true;
+  if (pathname.startsWith("/guest/")) return true;
+
+  // Read-only reference data and currency conversion are intentionally
+  // anonymous APIs and are needed by the supported guest features.
+  if (method.toUpperCase() === "GET") {
+    return (
+      pathname === "/languages" ||
+      pathname.startsWith("/languages/") ||
+      pathname === "/currencies" ||
+      pathname === "/currencies/convert" ||
+      pathname.startsWith("/currencies/")
+    );
+  }
+  return false;
 }
 
-export function storeTokens(
-  accessToken: string,
-  refreshToken?: string | null,
-): void {
+export function storeTokens(accessToken: string, refreshToken?: string | null): void {
   if (typeof window === "undefined") return;
 
   localStorage.setItem(TOKEN_STORAGE_KEY, accessToken);
@@ -106,11 +114,7 @@ function expireSession(): never {
   authenticationFailed = true;
   clearTokens();
 
-  if (
-    typeof window !== "undefined" &&
-    !redirectStarted &&
-    window.location.pathname !== "/login"
-  ) {
+  if (typeof window !== "undefined" && !redirectStarted && window.location.pathname !== "/login") {
     redirectStarted = true;
     window.location.replace("/login");
   }
@@ -148,13 +152,7 @@ function getErrorMessage(payload: unknown, status: number): string {
     title?: string;
   };
 
-  return (
-    error.message ??
-    error.error ??
-    error.body ??
-    error.title ??
-    fallback
-  );
+  return error.message ?? error.error ?? error.body ?? error.title ?? fallback;
 }
 
 async function refreshAccessToken(): Promise<string> {
@@ -183,11 +181,7 @@ async function refreshAccessToken(): Promise<string> {
     const payload = await readPayload(response);
 
     if (!response.ok) {
-      throw new ApiError(
-        getErrorMessage(payload, response.status),
-        response.status,
-        payload,
-      );
+      throw new ApiError(getErrorMessage(payload, response.status), response.status, payload);
     }
 
     const result = payload as ApiResponse<{
@@ -200,15 +194,10 @@ async function refreshAccessToken(): Promise<string> {
     // Accept both the refresh endpoint's OAuth-style names and the camelCase
     // names returned by the login endpoint.
     const accessToken = result?.data?.access_token ?? result?.data?.idToken;
-    const newRefreshToken =
-      result?.data?.refresh_token ?? result?.data?.refreshToken;
+    const newRefreshToken = result?.data?.refresh_token ?? result?.data?.refreshToken;
 
     if (!accessToken) {
-      throw new ApiError(
-        "Refresh response has no access token",
-        401,
-        payload,
-      );
+      throw new ApiError("Refresh response has no access token", 401, payload);
     }
 
     storeTokens(accessToken, newRefreshToken ?? refreshToken);
@@ -228,7 +217,7 @@ export async function apiFetch<T>(
   init: RequestInit = {},
   isRetry = false,
 ): Promise<T> {
-  const isPublicAuthRequest = isPublicAuthPath(path);
+  const isPublicAuthRequest = isPublicPath(path, init.method ?? "GET");
 
   // Do not hit protected endpoints again after terminal authentication failure.
   if (authenticationFailed && !isPublicAuthRequest) {
@@ -238,13 +227,7 @@ export async function apiFetch<T>(
   let token = getStoredToken();
   const refreshToken = getStoredRefreshToken();
 
-  if (
-    !isPublicAuthRequest &&
-    !isRetry &&
-    token &&
-    refreshToken &&
-    tokenExpiresSoon(token)
-  ) {
+  if (!isPublicAuthRequest && !isRetry && token && refreshToken && tokenExpiresSoon(token)) {
     try {
       token = await refreshAccessToken();
     } catch {
@@ -266,8 +249,7 @@ export async function apiFetch<T>(
       return expireSession();
     }
   }
-  const isFormData =
-    typeof FormData !== "undefined" && init.body instanceof FormData;
+  const isFormData = typeof FormData !== "undefined" && init.body instanceof FormData;
 
   const headers = new Headers(init.headers);
 
@@ -307,11 +289,7 @@ export async function apiFetch<T>(
   const payload = await readPayload(response);
 
   if (!response.ok) {
-    throw new ApiError(
-      getErrorMessage(payload, response.status),
-      response.status,
-      payload,
-    );
+    throw new ApiError(getErrorMessage(payload, response.status), response.status, payload);
   }
 
   return payload as T;

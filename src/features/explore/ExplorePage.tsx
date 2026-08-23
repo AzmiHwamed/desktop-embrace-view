@@ -19,10 +19,11 @@ import { InlineLoading } from "@/components/Loading";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { isRtlLanguage } from "@/lib/rtl";
-import { DeviceLocationError, getCurrentDeviceLocation } from "@/lib/device-location";
+import { DeviceLocationError, getAccurateDeviceLocation } from "@/lib/device-location";
 import { apiFetch, type ApiResponse } from "@/lib/api-client";
 import exploreStrings from "@/locales/en/explore.json";
 import type { ExploreCategory, ExplorePlace } from "./types";
+import { Link } from "@tanstack/react-router";
 
 const categoryIcons = {
   all: Compass,
@@ -37,7 +38,11 @@ const categoryIcons = {
 export function ExplorePage() {
   const t = useTranslations("explore", exploreStrings);
   const profile = useAppSelector((state) => state.account.profile);
-  const [position, setPosition] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [position, setPosition] = useState<{
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  } | null>(null);
   const [places, setPlaces] = useState<ExplorePlace[]>([]);
   const [category, setCategory] = useState<ExploreCategory>("all");
   const [loading, setLoading] = useState(true);
@@ -57,17 +62,31 @@ export function ExplorePage() {
     setLoading(true);
     setError(null);
     try {
-      const location = await getCurrentDeviceLocation({
+      const location = await getAccurateDeviceLocation({
         enableHighAccuracy: true,
         timeout: 12000,
-        maximumAge: 120000,
+        maximumAge: 0,
+        desiredAccuracy: 50,
       });
-      const current = { latitude: location.latitude, longitude: location.longitude };
+      const current = {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        accuracy: location.accuracy,
+      };
       setPosition(current);
-      const response = await apiFetch<ApiResponse<{ places: ExplorePlace[] }>>("/explore/nearby", {
-        method: "POST",
-        body: JSON.stringify({ ...current, languageCode: profile?.language?.code, radius: 10000 }),
-      });
+      const guest = window.localStorage.getItem("smarttravel.guest") === "true";
+      const response = await apiFetch<ApiResponse<{ places: ExplorePlace[] }>>(
+        guest ? "/guest/explore/nearby" : "/explore/nearby",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            latitude: current.latitude,
+            longitude: current.longitude,
+            languageCode: profile?.language?.code,
+            radius: 10000,
+          }),
+        },
+      );
       setPlaces(response.data.places);
     } catch (reason) {
       setError(
@@ -91,13 +110,6 @@ export function ExplorePage() {
     () => (category === "all" ? places : places.filter((place) => place.category === category)),
     [category, places],
   );
-
-  function directionsUrl(place: ExplorePlace) {
-    if (!position) return place.googleMapsUri ?? "#";
-    const origin = `${position.latitude},${position.longitude}`;
-    const destination = `${place.latitude},${place.longitude}`;
-    return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}&destination_place_id=${encodeURIComponent(place.placeId)}&travelmode=driving`;
-  }
 
   return (
     <div className="space-y-6 lg:space-y-8" dir={isRtl ? "rtl" : "ltr"}>
@@ -126,7 +138,8 @@ export function ExplorePage() {
           {position && (
             <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs">
               <MapPin className="h-3.5 w-3.5" />
-              {t.usingCurrentLocation}
+              {t.usingCurrentLocation} · {position.latitude.toFixed(5)},{" "}
+              {position.longitude.toFixed(5)} · ±{Math.round(position.accuracy)} m
             </p>
           )}
         </div>
@@ -175,38 +188,40 @@ export function ExplorePage() {
                 key={place.placeId}
                 className="group overflow-hidden transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg"
               >
-                {place.photoUri && (
-                  <div className="relative">
-                    <img
-                      src={place.photoUri}
-                      alt={place.name}
-                      className="h-44 w-full object-cover"
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                    />
-                    {place.photoAttributions.length > 0 && (
-                      <div className="absolute bottom-1 end-1 rounded bg-black/65 px-2 py-1 text-[10px] text-white">
-                        {place.photoAttributions.map((attribution, index) =>
-                          attribution.uri ? (
-                            <a
-                              key={`${attribution.displayName ?? "Google user"}-${index}`}
-                              href={attribution.uri}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="underline"
-                            >
-                              {attribution.displayName ?? "Google user"}
-                            </a>
-                          ) : (
-                            <span key={`${attribution.displayName ?? "Google user"}-${index}`}>
-                              {attribution.displayName ?? "Google user"}
-                            </span>
-                          ),
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className="relative">
+                  <img
+                    src={place.photoUri ?? "/place-placeholder.svg"}
+                    alt={place.photoUri ? place.name : ""}
+                    className="h-44 w-full object-cover"
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = "/place-placeholder.svg";
+                    }}
+                  />
+                  {place.photoUri && place.photoAttributions.length > 0 && (
+                    <div className="absolute bottom-1 end-1 rounded bg-black/65 px-2 py-1 text-[10px] text-white">
+                      {place.photoAttributions.map((attribution, index) =>
+                        attribution.uri ? (
+                          <a
+                            key={`${attribution.displayName ?? "Google user"}-${index}`}
+                            href={attribution.uri}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="underline"
+                          >
+                            {attribution.displayName ?? "Google user"}
+                          </a>
+                        ) : (
+                          <span key={`${attribution.displayName ?? "Google user"}-${index}`}>
+                            {attribution.displayName ?? "Google user"}
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  )}
+                </div>
                 <CardContent className="p-5">
                   <div className="flex items-start gap-3">
                     <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
@@ -227,10 +242,9 @@ export function ExplorePage() {
                       {t.away}
                     </span>
                     <Button asChild size="sm" className="rounded-xl">
-                      <a href={directionsUrl(place)} target="_blank" rel="noreferrer">
-                        <Navigation className="h-4 w-4" />
-                        {t.itinerary}
-                      </a>
+                      <Link to="/explore/place/$placeId" params={{ placeId: place.placeId }}>
+                        <Navigation className="h-4 w-4" /> View place
+                      </Link>
                     </Button>
                   </div>
                 </CardContent>

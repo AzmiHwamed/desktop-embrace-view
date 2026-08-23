@@ -21,6 +21,7 @@ const initialState: AuthState = {
   token: null,
   status: "idle",
   error: null,
+  isGuest: false,
   resetFlow: {
     step: "idle",
     email: null,
@@ -161,7 +162,9 @@ export const completePasswordReset = createAsyncThunk<void, ResetPasswordPayload
 );
 
 function applyAuthSuccess(state: AuthState, payload: LoginResponse) {
+  if (typeof window !== "undefined") window.localStorage.removeItem("smarttravel.guest");
   state.status = "authenticated";
+  state.isGuest = false;
   state.token = payload.data.idToken;
   state.user = payload.data.user;
 }
@@ -176,14 +179,29 @@ const authSlice = createSlice({
       if (token) {
         state.token = token;
         state.status = "authenticated";
+        state.isGuest = false;
+      } else if (window.localStorage.getItem("smarttravel.guest") === "true") {
+        state.status = "authenticated";
+        state.isGuest = true;
       }
+    },
+    continueAsGuest(state) {
+      clearTokens();
+      if (typeof window !== "undefined") window.localStorage.setItem("smarttravel.guest", "true");
+      state.user = null;
+      state.token = null;
+      state.status = "authenticated";
+      state.error = null;
+      state.isGuest = true;
     },
     logout(state) {
       clearTokens();
+      if (typeof window !== "undefined") window.localStorage.removeItem("smarttravel.guest");
       state.user = null;
       state.token = null;
       state.status = "idle";
       state.error = null;
+      state.isGuest = false;
     },
     clearAuthError(state) {
       state.error = null;
@@ -277,5 +295,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { restoreSession, logout, clearAuthError, resetPasswordFlowReset } = authSlice.actions;
+export const { restoreSession, continueAsGuest, logout, clearAuthError, resetPasswordFlowReset } = authSlice.actions;
 export default authSlice.reducer;

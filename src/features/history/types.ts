@@ -29,6 +29,7 @@ export type Expense = {
   merchantMatchConfidence?: number | null;
   category: ExpenseCategory | null;
   currency: ExpenseCurrency | null;
+  tripId?: string | null;
 };
 
 export type DateRangeDays = "7" | "30" | "90";
@@ -61,6 +62,7 @@ export type ExpenseFormValues = {
   date: string; // yyyy-mm-dd
   categoryId: string;
   currencyId?: string;
+  tripId?: string;
 };
 
 export type CreateExpenseInput = ExpenseFormValues;

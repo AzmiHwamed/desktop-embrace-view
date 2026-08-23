@@ -19,7 +19,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const isAuthenticated = useAppSelector((s) => Boolean(s.auth.token));
+  const { token, isGuest } = useAppSelector((s) => s.auth);
+  const isAuthenticated = Boolean(token) || isGuest;
   const profile = useAppSelector((s) => s.account.profile);
   const budgetsHydrated = useAppSelector((s) => s.budgets.hydrated);
   const activeBudget = useAppSelector((s) => s.budgets.plans.find((plan) => plan.id === s.budgets.activePlanId));
@@ -34,25 +35,33 @@ export function AppLayout({ children }: { children: ReactNode }) {
     setSessionChecked(true);
   }, [dispatch]);
 
-  const isPublicAuthPage =
-    pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password";
+  const isStandalonePublicPage =
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/forgot-password" ||
+    pathname === "/onboarding";
+
+  const guestAllowedPaths = ["/scan", "/convert", "/interpreter", "/explore"];
+  const isGuestAllowedPage = guestAllowedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
   useEffect(() => {
-    if (sessionChecked && !isAuthenticated && !isPublicAuthPage) {
+    if (sessionChecked && !isAuthenticated && !isStandalonePublicPage) {
+      navigate({ to: "/login", replace: true });
+    } else if (sessionChecked && isGuest && !isStandalonePublicPage && !isGuestAllowedPage) {
       navigate({ to: "/login", replace: true });
     }
-  }, [sessionChecked, isAuthenticated, isPublicAuthPage, navigate]);
+  }, [sessionChecked, isAuthenticated, isGuest, isGuestAllowedPage, isStandalonePublicPage, navigate]);
 
   useEffect(() => {
-    if (isAuthenticated && profile && !budgetsHydrated) dispatch(hydrateBudgets());
-  }, [dispatch, isAuthenticated, profile, budgetsHydrated]);
+    if (isAuthenticated && !isGuest && profile && !budgetsHydrated) dispatch(hydrateBudgets());
+  }, [dispatch, isAuthenticated, isGuest, profile, budgetsHydrated]);
 
   useEffect(() => {
     if (!activeBudget || activeBudget.status !== "active") return;
     dispatch(fetchBudgetExpenses(activeBudget)).then(() => dispatch(evaluateBudgetReminders()));
   }, [dispatch, activeBudget]);
 
-  if (isPublicAuthPage) {
+  if (isStandalonePublicPage) {
     return <>{children}</>;
   }
 
@@ -84,8 +93,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
           covers the sidebar/nav chrome that lives outside any single page's
           own root element. */}
       <div className="flex min-h-screen w-full bg-background" dir={isRtl ? "rtl" : "ltr"}>
-        <NearbyGuide />
-        <CountryLocationMonitor />
+        {!isGuest && <NearbyGuide />}
+        {!isGuest && <CountryLocationMonitor />}
         <AppSidebar />
         <SidebarInset className="min-w-0 flex-1 bg-background">
           <TopNav isAuthenticated={isAuthenticated} />

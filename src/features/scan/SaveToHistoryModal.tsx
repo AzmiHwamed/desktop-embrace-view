@@ -54,6 +54,7 @@ export function SaveToHistoryModal({ open, onOpenChange, receipt, matchedMerchan
     saveStatus,
     saveError,
   } = useAppSelector((state) => state.scan);
+  const userCurrency = useAppSelector((state) => state.account.profile?.currency);
 
   const [categoryId, setCategoryId] = useState("");
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -79,11 +80,20 @@ export function SaveToHistoryModal({ open, onOpenChange, receipt, matchedMerchan
     setCategoryId("");
     setNewCategoryName("");
     setDescription(receipt.merchant ?? "");
-    setAmount(receipt.total == null ? "" : String(receipt.total));
+    const amountInUserCurrency = receipt.convertedTotal ?? receipt.total;
+    setAmount(amountInUserCurrency == null ? "" : String(amountInUserCurrency));
     setDate(receipt.date?.slice(0, 10) ?? "");
     setLocalError(null);
     dispatch(resetSaveStatus());
-  }, [open, receipt.id, receipt.merchant, receipt.total, receipt.date, dispatch]);
+  }, [
+    open,
+    receipt.id,
+    receipt.merchant,
+    receipt.total,
+    receipt.convertedTotal,
+    receipt.date,
+    dispatch,
+  ]);
 
   // Reset the form for this receipt whenever the modal is (re)opened.
   // Prefill from the AI recommendation once it lands.
@@ -134,6 +144,10 @@ export function SaveToHistoryModal({ open, onOpenChange, receipt, matchedMerchan
           categoryId: resolvedCategoryId,
           description: description.trim(),
           amount: Number(amount),
+          amountCurrencyId:
+            receipt.convertedTotal != null || receipt.currency === userCurrency?.code
+              ? userCurrency?.id
+              : undefined,
           date: date || undefined,
           merchantName: matchedMerchant?.name,
           googlePlaceId: matchedMerchant?.placeId,
@@ -175,7 +189,9 @@ export function SaveToHistoryModal({ open, onOpenChange, receipt, matchedMerchan
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="expense-amount">{t.amount}</Label>
+              <Label htmlFor="expense-amount">
+                {t.amount}{userCurrency?.code ? ` (${userCurrency.code})` : ""}
+              </Label>
               <Input
                 id="expense-amount"
                 type="number"
