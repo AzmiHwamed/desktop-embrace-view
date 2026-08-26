@@ -27,6 +27,14 @@ export type Country = {
   alpha2Code: string;
   alpha3Code: string;
   flag?: string;
+  currency?: Currency | null;
+  language?: Language | null;
+};
+
+export type CountryPreferences = {
+  countryId: string;
+  currency: Currency | null;
+  language: Language | null;
 };
 
 export type Language = {

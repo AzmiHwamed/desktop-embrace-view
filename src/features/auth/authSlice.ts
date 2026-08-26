@@ -14,7 +14,7 @@ import type {
   ValidateOtpPayload,
   ResetPasswordPayload,
 } from "./types";
-import { getProviderToken } from "@/lib/oath-token";
+import { getProviderToken, ProviderLoginCancelledError } from "@/lib/oath-token";
 
 const initialState: AuthState = {
   user: null,
@@ -67,7 +67,7 @@ export const register = createAsyncThunk<LoginResponse, RegisterCredentials, { r
   }
 );
 
-export const loginWithProvider = createAsyncThunk<LoginResponse, IdpProvider, { rejectValue: string }>(
+export const loginWithProvider = createAsyncThunk<LoginResponse, IdpProvider, { rejectValue: string | null }>(
   "auth/loginWithProvider",
   async (provider, { rejectWithValue }) => {
     try {
@@ -81,6 +81,9 @@ export const loginWithProvider = createAsyncThunk<LoginResponse, IdpProvider, { 
       }
       return data;
     } catch (error) {
+      if (error instanceof ProviderLoginCancelledError) {
+        return rejectWithValue(null);
+      }
       return rejectWithValue(error instanceof Error ? error.message : "Unable to sign in");
     }
   }
@@ -90,7 +93,8 @@ export const fetchCurrentUser = createAsyncThunk<AuthUser, void, { rejectValue: 
   "auth/me",
   async (_arg, { rejectWithValue }) => {
     try {
-      return await apiFetch<AuthUser>("/auth/me");
+      const response = await apiFetch<{ data: AuthUser }>("/users/me");
+      return response.data;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : "Session expired");
     }
@@ -242,6 +246,11 @@ const authSlice = createSlice({
         applyAuthSuccess(state, action.payload);
       })
       .addCase(loginWithProvider.rejected, (state, action) => {
+        if (action.payload === null) {
+          state.status = "idle";
+          state.error = null;
+          return;
+        }
         state.status = "error";
         state.error = action.payload || "Unable to sign in";
       })

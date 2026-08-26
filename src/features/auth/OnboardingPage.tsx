@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/select";
 import { fetchReferenceData, saveProfile } from "@/features/account/accountSlice";
 import { fetchCurrentUser } from "@/features/auth/authSlice";
+import { apiFetch, type ApiResponse } from "@/lib/api-client";
+import type { CountryPreferences } from "@/features/account/types";
 
 export function OnboardingPage() {
   const dispatch = useAppDispatch();
@@ -32,6 +34,20 @@ export function OnboardingPage() {
   useEffect(() => {
     dispatch(fetchReferenceData());
   }, [dispatch]);
+
+  async function handleCountryChange(countryId: string) {
+    setCurrentCountryId(countryId);
+
+    try {
+      const response = await apiFetch<ApiResponse<CountryPreferences>>(
+        `/countries/${countryId}/preferences`,
+      );
+      if (response.data.currency) setCurrencyId(response.data.currency.id);
+      if (response.data.language) setLanguageId(response.data.language.id);
+    } catch {
+      // Keep the fields manually selectable when a country has no defaults yet.
+    }
+  }
 
   const canSubmit = currencyId && currentCountryId && languageId && !saving;
 
@@ -84,7 +100,7 @@ export function OnboardingPage() {
 
             <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
-              <Select value={currentCountryId} onValueChange={setCurrentCountryId} disabled={referenceLoading}>
+              <Select value={currentCountryId} onValueChange={handleCountryChange} disabled={referenceLoading}>
                 <SelectTrigger id="country" className="h-11 rounded-xl">
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
