@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Layers,
   Receipt,
+  RefreshCw,
   ScanLine,
   TrendingUp,
   WalletCards,
@@ -28,6 +29,7 @@ import { Progress } from "@/components/ui/progress";
 import { useAppDispatch, useAppSelector, useHasMounted, useTranslations } from "@/app/hooks";
 import {
   fetchDashboardData,
+  fetchPopularRates,
   fetchSpendingTrend,
   setRange,
 } from "@/features/dashboard/dashboardSlice";
@@ -47,11 +49,14 @@ export function Dashboard() {
     byCategory,
     trend,
     recent,
+    popularRates,
     loading,
     trendLoading,
+    popularRatesLoading,
     dataLoaded,
     trendLoaded,
     error,
+    popularRatesError,
   } = useAppSelector((s) => s.dashboard);
   const profile = useAppSelector((s) => s.account.profile);
   const activeBudget = useAppSelector((s) =>
@@ -75,6 +80,12 @@ export function Dashboard() {
   useEffect(() => {
     dispatch(fetchSpendingTrend());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (profile?.currencyId) {
+      dispatch(fetchPopularRates());
+    }
+  }, [dispatch, profile?.currencyId]);
 
   const hasMounted = useHasMounted();
   const currencyCode = hasMounted ? (profile?.currency?.code ?? "") : "";
@@ -247,6 +258,70 @@ export function Dashboard() {
           hint={topCategory ? `${currencyCode} ${topCategory.total.toFixed(2)}` : t.noExpensesYet}
           icon={Layers}
         />
+      </section>
+
+      <section className="surface-card p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display text-lg font-bold">{t.popularRates}</h2>
+            <p className="text-sm text-muted-foreground">
+              {interpolate(t.popularRatesSubtitle, { currency: currencyCode || t.yourCurrency })}
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-xl"
+            disabled={popularRatesLoading || !profile?.currencyId}
+            onClick={() => void dispatch(fetchPopularRates())}
+          >
+            <RefreshCw className={`h-4 w-4${popularRatesLoading ? " animate-spin" : ""}`} />
+            {t.refreshRates}
+          </Button>
+        </div>
+
+        {popularRatesLoading && popularRates.length === 0 ? (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="h-24 animate-pulse rounded-2xl bg-muted" />
+            ))}
+          </div>
+        ) : popularRatesError && popularRates.length === 0 ? (
+          <p className="mt-5 text-sm text-destructive">{t.popularRatesError}</p>
+        ) : popularRates.length === 0 ? (
+          <p className="mt-5 text-sm text-muted-foreground">{t.noPopularRates}</p>
+        ) : (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {popularRates.map((item) => {
+              const isPositive = item.changePercent > 0;
+              const isNegative = item.changePercent < 0;
+              return (
+                <article key={item.currencyId} className="rounded-2xl border bg-card p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="grid h-10 min-w-10 place-items-center rounded-xl bg-primary/10 px-2 font-bold text-primary">
+                      {item.badgeText}
+                    </span>
+                    <span
+                      className={`text-xs font-semibold ${
+                        isPositive
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : isNegative
+                            ? "text-destructive"
+                            : "text-muted-foreground"
+                      }`}
+                    >
+                      {item.changePercent > 0 ? "+" : ""}
+                      {item.changePercent.toFixed(2)}%
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold">{item.currencyCode}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{item.conversionText}</p>
+                </article>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="grid gap-4 xl:grid-cols-3 xl:gap-6">

@@ -48,6 +48,17 @@ export type ExpenseStatistics = {
   byPeriod: { period: string; total: number; count: number }[];
 };
 
+export type PopularRate = {
+  currencyId: string;
+  currencyCode: string;
+  label: string;
+  badgeText: string;
+  conversionText: string;
+  rate: number;
+  changePercent: number;
+  rateHistory: number[];
+};
+
 export type DashboardState = {
   range: DashboardRange;
   spentThisPeriod: number;
@@ -55,9 +66,12 @@ export type DashboardState = {
   byCategory: CategoryBreakdown[];
   trend: SpendPoint[];
   recent: Expense[];
+  popularRates: PopularRate[];
   loading: boolean;
   trendLoading: boolean;
-  dataLoaded: boolean;   // true once fetchDashboardData has settled at least once
-  trendLoaded: boolean;  // true once fetchSpendingTrend has settled at least once
+  popularRatesLoading: boolean;
+  dataLoaded: boolean; // true once fetchDashboardData has settled at least once
+  trendLoaded: boolean; // true once fetchSpendingTrend has settled at least once
   error: string | null;
+  popularRatesError: string | null;
 };

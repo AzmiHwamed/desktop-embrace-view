@@ -33,5 +33,10 @@
   "tripCategoryPlans": "Category plans",
   "noActiveTrip": "No active trip",
   "noActiveTripHint": "Create a trip budget to track spending, limits and reminders.",
-  "planTrip": "Plan a trip"
+  "planTrip": "Plan a trip",
+  "popularRates": "Popular exchange rates",
+  "popularRatesSubtitle": "Live conversions from {currency}",
+  "refreshRates": "Refresh",
+  "popularRatesError": "Popular exchange rates are unavailable right now.",
+  "noPopularRates": "No popular exchange rates are available for this currency."
 }

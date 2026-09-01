@@ -7,6 +7,7 @@ import type {
   DashboardState,
   Expense,
   ExpenseStatistics,
+  PopularRate,
   SpendPoint,
 } from "./types";
 
@@ -17,11 +18,14 @@ const initialState: DashboardState = {
   byCategory: [],
   trend: [],
   recent: [],
+  popularRates: [],
   loading: false,
   trendLoading: false,
+  popularRatesLoading: false,
   dataLoaded: false,
   trendLoaded: false,
   error: null,
+  popularRatesError: null,
 };
 
 function getRangeDates(range: DashboardRange): { startDate: string; endDate: string } {
@@ -71,9 +75,7 @@ export const fetchDashboardData = createAsyncThunk(
     const statisticsQuery = buildQuery({ startDate, endDate, groupBy: "day" });
 
     const [statsRes, recentRes] = await Promise.all([
-      apiFetch<ApiResponse<ExpenseStatistics>>(
-        `/expenses/statistics?${statisticsQuery}`,
-      ),
+      apiFetch<ApiResponse<ExpenseStatistics>>(`/expenses/statistics?${statisticsQuery}`),
       // The backend already orders this endpoint newest first. Do not apply
       // the dashboard range here: "Recent activity" should show the latest
       // saved expenses even when they fall outside the selected stats period.
@@ -94,9 +96,7 @@ export const fetchSpendingTrend = createAsyncThunk("dashboard/fetchTrend", async
   const { startDate, endDate } = getTrendWindow();
   const query = buildQuery({ startDate, endDate, groupBy: "day" });
 
-  const res = await apiFetch<ApiResponse<ExpenseStatistics>>(
-    `/expenses/statistics?${query}`,
-  );
+  const res = await apiFetch<ApiResponse<ExpenseStatistics>>(`/expenses/statistics?${query}`);
 
   const trend: SpendPoint[] = res.data.byPeriod.map((p) => ({
     day: formatPeriodLabel(p.period),
@@ -104,6 +104,11 @@ export const fetchSpendingTrend = createAsyncThunk("dashboard/fetchTrend", async
   }));
 
   return trend;
+});
+
+export const fetchPopularRates = createAsyncThunk("dashboard/fetchPopularRates", async () => {
+  const res = await apiFetch<ApiResponse<PopularRate[]>>("/currencies/popular-rates");
+  return res.data;
 });
 
 const dashboardSlice = createSlice({
@@ -145,6 +150,18 @@ const dashboardSlice = createSlice({
         state.trendLoading = false;
         state.trendLoaded = true;
         state.error = action.error.message ?? "Failed to load spending trend";
+      })
+      .addCase(fetchPopularRates.pending, (state) => {
+        state.popularRatesLoading = true;
+        state.popularRatesError = null;
+      })
+      .addCase(fetchPopularRates.fulfilled, (state, action) => {
+        state.popularRatesLoading = false;
+        state.popularRates = action.payload;
+      })
+      .addCase(fetchPopularRates.rejected, (state, action) => {
+        state.popularRatesLoading = false;
+        state.popularRatesError = action.error.message ?? "Failed to load popular rates";
       });
   },
 });
