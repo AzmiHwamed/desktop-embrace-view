@@ -33,12 +33,12 @@ import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
 import { interpolate } from "@/lib/i18n";
 import { isRtlLanguage } from "@/lib/rtl";
 import accountStrings from "@/locales/en/account.json";
-import type { Profile, SubscriptionStatus } from "./types";
+import type { CountryPreferences, Profile, SubscriptionStatus } from "./types";
 import { fetchTranslation, resetTranslations } from "@/features/i18n/i18nSlice";
 import { storeLanguage } from "@/lib/language-preference";
 import loginStrings from "@/locales/en/login.json";
 import appShellStrings from "@/locales/en/app-shell.json";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, type ApiResponse } from "@/lib/api-client";
 import { logout } from "@/features/auth/authSlice";
 
 // Maps status -> which timestamp on the profile is the relevant one to
@@ -52,26 +52,37 @@ function getSubscriptionDisplay(
   if (!profile) return { statusLabel: "—", hint: "" };
 
   const status: SubscriptionStatus = profile.subscriptionStatus;
-  const format = (iso: string | null) =>
-    iso ? new Date(iso).toLocaleDateString() : null;
+  const format = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString() : null);
 
   switch (status) {
     case "active": {
       const date = format(profile.subscriptionEndsAt);
-      return { statusLabel: t.active, hint: date ? interpolate(t.renewsOn, { date }) : t.noEndDate };
+      return {
+        statusLabel: t.active,
+        hint: date ? interpolate(t.renewsOn, { date }) : t.noEndDate,
+      };
     }
     case "trial": {
       const date = format(profile.trialEndsAt);
-      return { statusLabel: t.trial, hint: date ? interpolate(t.trialEndsOn, { date }) : t.noEndDate };
+      return {
+        statusLabel: t.trial,
+        hint: date ? interpolate(t.trialEndsOn, { date }) : t.noEndDate,
+      };
     }
     case "expired": {
       const date = format(profile.subscriptionEndsAt);
-      return { statusLabel: t.expired, hint: date ? interpolate(t.expiredOn, { date }) : t.noEndDate };
+      return {
+        statusLabel: t.expired,
+        hint: date ? interpolate(t.expiredOn, { date }) : t.noEndDate,
+      };
     }
     case "cancelled":
     case "canceled": {
       const date = format(profile.subscriptionEndsAt);
-      return { statusLabel: t.canceled, hint: date ? interpolate(t.accessUntil, { date }) : t.noEndDate };
+      return {
+        statusLabel: t.canceled,
+        hint: date ? interpolate(t.accessUntil, { date }) : t.noEndDate,
+      };
     }
     default:
       return { statusLabel: "—", hint: "" };
@@ -106,7 +117,10 @@ export function AccountPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [preferencesLoading, setPreferencesLoading] = useState(false);
+  const [preferencesError, setPreferencesError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const preferenceRequest = useRef(0);
 
   useEffect(() => {
     dispatch(fetchProfile());
@@ -177,7 +191,33 @@ export function AccountPage() {
     }
   }
 
+  async function handleCountryChange(countryId: string) {
+    const requestId = ++preferenceRequest.current;
+    setCurrentCountryId(countryId);
+    setCurrencyId("");
+    setLanguageId("");
+    setPreferencesError(null);
+    setPreferencesLoading(true);
+
+    try {
+      const response = await apiFetch<ApiResponse<CountryPreferences>>(
+        `/countries/${countryId}/preferences`,
+      );
+      if (requestId !== preferenceRequest.current) return;
+      if (response.data.currency) setCurrencyId(response.data.currency.id);
+      if (response.data.language) setLanguageId(response.data.language.id);
+    } catch {
+      if (requestId !== preferenceRequest.current) return;
+      setPreferencesError(t.preferencesUnavailable);
+    } finally {
+      if (requestId === preferenceRequest.current) setPreferencesLoading(false);
+    }
+  }
+
   function handleCancel() {
+    preferenceRequest.current += 1;
+    setPreferencesLoading(false);
+    setPreferencesError(null);
     if (profile) {
       setDisplayName(profile.displayName ?? "");
       setCurrencyId(profile.currencyId ?? "");
@@ -189,7 +229,8 @@ export function AccountPage() {
   }
 
   async function handleDeleteAccount() {
-    if (!profile?.email || deleteConfirmation.trim().toLowerCase() !== profile.email.toLowerCase()) return;
+    if (!profile?.email || deleteConfirmation.trim().toLowerCase() !== profile.email.toLowerCase())
+      return;
     setDeleting(true);
     setDeleteError(null);
     try {
@@ -200,7 +241,11 @@ export function AccountPage() {
       dispatch(logout());
       navigate({ to: "/login", replace: true });
     } catch (deleteAccountError) {
-      setDeleteError(deleteAccountError instanceof Error ? deleteAccountError.message : "Unable to delete account");
+      setDeleteError(
+        deleteAccountError instanceof Error
+          ? deleteAccountError.message
+          : "Unable to delete account",
+      );
       setDeleting(false);
     }
   }
@@ -299,28 +344,22 @@ export function AccountPage() {
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="email">{t.email}</Label>
-              <Input id="email" type="email" value={profile?.email ?? ""} disabled className="h-11 rounded-xl" />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="currency">{t.homeCurrency}</Label>
-              <Select value={currencyId} onValueChange={setCurrencyId} disabled={referenceLoading}>
-                <SelectTrigger id="currency" className="h-11 rounded-xl">
-                  <SelectValue placeholder={t.selectCurrency} />
-                </SelectTrigger>
-                <SelectContent>
-                  {currencies.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.code} — {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                id="email"
+                type="email"
+                value={profile?.email ?? ""}
+                disabled
+                className="h-11 rounded-xl"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="country">{t.country}</Label>
-              <Select value={currentCountryId} onValueChange={setCurrentCountryId} disabled={referenceLoading}>
+              <Select
+                value={currentCountryId}
+                onValueChange={handleCountryChange}
+                disabled={referenceLoading}
+              >
                 <SelectTrigger id="country" className="h-11 rounded-xl">
                   <SelectValue placeholder={t.selectCountry} />
                 </SelectTrigger>
@@ -336,10 +375,38 @@ export function AccountPage() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="currency">{t.homeCurrency}</Label>
+              <Select
+                value={currencyId}
+                onValueChange={setCurrencyId}
+                disabled={referenceLoading || preferencesLoading || !currentCountryId}
+              >
+                <SelectTrigger id="currency" className="h-11 rounded-xl">
+                  <SelectValue
+                    placeholder={preferencesLoading ? t.detectingCurrency : t.selectCurrency}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencies.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.code} — {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="language">{t.language}</Label>
-              <Select value={languageId} onValueChange={setLanguageId} disabled={referenceLoading}>
+              <Select
+                value={languageId}
+                onValueChange={setLanguageId}
+                disabled={referenceLoading || preferencesLoading || !currentCountryId}
+              >
                 <SelectTrigger id="language" className="h-11 rounded-xl">
-                  <SelectValue placeholder={t.selectLanguage} />
+                  <SelectValue
+                    placeholder={preferencesLoading ? t.detectingLanguage : t.selectLanguage}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {languages.map((l) => (
@@ -350,9 +417,26 @@ export function AccountPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {preferencesError && (
+              <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-700 md:col-span-2 dark:text-amber-300">
+                {preferencesError}
+              </p>
+            )}
           </div>
           <div className="mt-6 flex flex-wrap gap-2">
-            <Button className="bg-brand rounded-xl shadow-brand" onClick={handleSave} disabled={saving || loading}>
+            <Button
+              className="bg-brand rounded-xl shadow-brand"
+              onClick={handleSave}
+              disabled={
+                saving ||
+                loading ||
+                preferencesLoading ||
+                !currentCountryId ||
+                !currencyId ||
+                !languageId
+              }
+            >
               {saving ? t.saving : t.saveChanges}
             </Button>
             <Button variant="ghost" className="rounded-xl" onClick={handleCancel} disabled={saving}>
@@ -363,9 +447,17 @@ export function AccountPage() {
           <div className="mt-8 border-t border-destructive/20 pt-6">
             <h3 className="font-display text-base font-bold text-destructive">Delete account</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Permanently deletes your profile, saved data, payments, conversations, and sign-in identity.
+              Permanently deletes your profile, saved data, payments, conversations, and sign-in
+              identity.
             </p>
-            <AlertDialog onOpenChange={(open) => { if (!open) { setDeleteConfirmation(""); setDeleteError(null); } }}>
+            <AlertDialog
+              onOpenChange={(open) => {
+                if (!open) {
+                  setDeleteConfirmation("");
+                  setDeleteError(null);
+                }
+              }}
+            >
               <AlertDialogTrigger asChild>
                 <Button variant="destructive" className="mt-4 rounded-xl">
                   <Trash2 className="h-4 w-4" /> Delete my account
@@ -389,8 +481,15 @@ export function AccountPage() {
                 <AlertDialogFooter>
                   <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
                   <AlertDialogAction
-                    disabled={deleting || !profile?.email || deleteConfirmation.trim().toLowerCase() !== profile.email.toLowerCase()}
-                    onClick={(event) => { event.preventDefault(); void handleDeleteAccount(); }}
+                    disabled={
+                      deleting ||
+                      !profile?.email ||
+                      deleteConfirmation.trim().toLowerCase() !== profile.email.toLowerCase()
+                    }
+                    onClick={(event) => {
+                      event.preventDefault();
+                      void handleDeleteAccount();
+                    }}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     {deleting ? "Deleting…" : "Delete permanently"}

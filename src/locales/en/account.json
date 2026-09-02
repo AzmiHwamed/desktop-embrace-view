@@ -29,5 +29,8 @@
   "selectLanguage": "Select language",
   "saving": "Saving…",
   "saveChanges": "Save changes",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "detectingCurrency": "Detecting currency…",
+  "detectingLanguage": "Detecting language…",
+  "preferencesUnavailable": "We could not detect defaults for this country. Please select them manually."
 }

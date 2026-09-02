@@ -1,5 +1,5 @@
 // pages/OnboardingPage.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Plane } from "lucide-react";
 
@@ -30,26 +30,42 @@ export function OnboardingPage() {
   const [currencyId, setCurrencyId] = useState("");
   const [currentCountryId, setCurrentCountryId] = useState("");
   const [languageId, setLanguageId] = useState("");
+  const [preferencesLoading, setPreferencesLoading] = useState(false);
+  const [preferencesError, setPreferencesError] = useState<string | null>(null);
+  const preferenceRequest = useRef(0);
 
   useEffect(() => {
     dispatch(fetchReferenceData());
   }, [dispatch]);
 
   async function handleCountryChange(countryId: string) {
+    const requestId = ++preferenceRequest.current;
     setCurrentCountryId(countryId);
+    setCurrencyId("");
+    setLanguageId("");
+    setPreferencesError(null);
+    setPreferencesLoading(true);
 
     try {
       const response = await apiFetch<ApiResponse<CountryPreferences>>(
         `/countries/${countryId}/preferences`,
       );
+      if (requestId !== preferenceRequest.current) return;
       if (response.data.currency) setCurrencyId(response.data.currency.id);
       if (response.data.language) setLanguageId(response.data.language.id);
     } catch {
-      // Keep the fields manually selectable when a country has no defaults yet.
+      if (requestId !== preferenceRequest.current) return;
+      setPreferencesError(
+        "We could not detect defaults for this country. Please select them manually.",
+      );
+    } finally {
+      if (requestId === preferenceRequest.current) setPreferencesLoading(false);
     }
   }
 
-  const canSubmit = currencyId && currentCountryId && languageId && !saving;
+  const canSubmit = Boolean(
+    currencyId && currentCountryId && languageId && !saving && !preferencesLoading,
+  );
 
   async function handleContinue() {
     const result = await dispatch(
@@ -83,24 +99,12 @@ export function OnboardingPage() {
 
           <div className="mt-6 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="currency">Home currency</Label>
-              <Select value={currencyId} onValueChange={setCurrencyId} disabled={referenceLoading}>
-                <SelectTrigger id="currency" className="h-11 rounded-xl">
-                  <SelectValue placeholder="Select currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  {currencies.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.code} — {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
-              <Select value={currentCountryId} onValueChange={handleCountryChange} disabled={referenceLoading}>
+              <Select
+                value={currentCountryId}
+                onValueChange={handleCountryChange}
+                disabled={referenceLoading}
+              >
                 <SelectTrigger id="country" className="h-11 rounded-xl">
                   <SelectValue placeholder="Select country" />
                 </SelectTrigger>
@@ -116,10 +120,38 @@ export function OnboardingPage() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="currency">Home currency</Label>
+              <Select
+                value={currencyId}
+                onValueChange={setCurrencyId}
+                disabled={referenceLoading || preferencesLoading || !currentCountryId}
+              >
+                <SelectTrigger id="currency" className="h-11 rounded-xl">
+                  <SelectValue
+                    placeholder={preferencesLoading ? "Detecting currency…" : "Select currency"}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencies.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.code} — {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="language">Language</Label>
-              <Select value={languageId} onValueChange={setLanguageId} disabled={referenceLoading}>
+              <Select
+                value={languageId}
+                onValueChange={setLanguageId}
+                disabled={referenceLoading || preferencesLoading || !currentCountryId}
+              >
                 <SelectTrigger id="language" className="h-11 rounded-xl">
-                  <SelectValue placeholder="Select language" />
+                  <SelectValue
+                    placeholder={preferencesLoading ? "Detecting language…" : "Select language"}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {languages.map((l) => (
@@ -130,6 +162,12 @@ export function OnboardingPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {preferencesError && (
+              <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+                {preferencesError}
+              </p>
+            )}
 
             {error && (
               <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
