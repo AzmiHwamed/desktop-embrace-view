@@ -1,7 +1,7 @@
 // pages/ExpensesPage.tsx
 import { useEffect, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { Pencil, Receipt, TrendingUp, Wallet } from "lucide-react";
+import { Pencil, Plus, Receipt, TrendingUp, Wallet } from "lucide-react";
 
 import { PageHeader } from "@/components/AppLayout";
 import { StatCard } from "@/components/StatCard";
@@ -12,17 +12,37 @@ import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
 import { interpolate } from "@/lib/i18n";
 import { isRtlLanguage } from "@/lib/rtl";
 import expensesStrings from "@/locales/en/expenses.json";
-import { fetchExpensesOverview, setBudget, setExpenseRange } from "@/features/expenses/expensesSlice";
+import {
+  fetchExpensesOverview,
+  setBudget,
+  setExpenseRange,
+} from "@/features/expenses/expensesSlice";
 import type { ExpenseRange } from "@/features/expenses/types";
 import { MerchantLink } from "@/components/MerchantLink";
+import { ExpenseFormDialog } from "@/components/Expense/ExpenseFormDialog";
+import {
+  createExpense,
+  fetchExpenseCategories,
+  fetchCurrencies,
+} from "@/features/history/historySlice";
+import type { ExpenseFormValues } from "@/features/history/types";
+import historyStrings from "@/locales/en/history.json";
 
 export function ExpensesPage() {
   const dispatch = useAppDispatch();
   const t = useTranslations("expenses", expensesStrings);
-  const { range, total, count, byCategory, largest, budget, loading, error, dataLoaded } = useAppSelector(
-    (s) => s.expenses,
-  );
+  const historyT = useTranslations("history", historyStrings);
+  const { range, total, count, byCategory, largest, budget, loading, error, dataLoaded } =
+    useAppSelector((s) => s.expenses);
   const profile = useAppSelector((s) => s.account.profile);
+  const {
+    categories,
+    currencies,
+    creating,
+    error: formError,
+    categoriesLoaded,
+    currenciesLoaded,
+  } = useAppSelector((s) => s.history);
 
   const isRtl = isRtlLanguage(profile?.language?.code);
 
@@ -34,6 +54,12 @@ export function ExpensesPage() {
 
   const [editingBudget, setEditingBudget] = useState(false);
   const [budgetDraft, setBudgetDraft] = useState(String(budget));
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchExpenseCategories());
+    dispatch(fetchCurrencies());
+  }, [dispatch]);
 
   useEffect(() => {
     dispatch(fetchExpensesOverview(range));
@@ -51,9 +77,18 @@ export function ExpensesPage() {
     setEditingBudget(false);
   }
 
-  // True until the overview fetch has settled (fulfilled OR rejected) at
-  // least once — mirrors the isPageLoading gate on Dashboard/Convert/History.
-  const isPageLoading = !dataLoaded;
+  async function handleSubmitExpense(values: ExpenseFormValues) {
+    try {
+      await dispatch(createExpense(values)).unwrap();
+      setDialogOpen(false);
+      dispatch(fetchExpensesOverview(range));
+    } catch {
+      // Keep the form open; the shared history slice supplies its save error.
+    }
+  }
+
+  // Wait for the overview and the shared expense form's reference data.
+  const isPageLoading = !dataLoaded || !categoriesLoaded || !currenciesLoaded;
 
   if (isPageLoading) {
     return <ExpensesSkeleton dir={isRtl ? "rtl" : "ltr"} />;
@@ -86,7 +121,11 @@ export function ExpensesPage() {
         <StatCard
           label={t.totalSpent}
           value={`${currencyCode} ${total.toFixed(2)}`}
-          hint={loading ? t.loading : interpolate(count === 1 ? t.acrossExpense : t.acrossExpenses, { count })}
+          hint={
+            loading
+              ? t.loading
+              : interpolate(count === 1 ? t.acrossExpense : t.acrossExpenses, { count })
+          }
           icon={Receipt}
           tone="brand"
         />
@@ -132,7 +171,10 @@ export function ExpensesPage() {
                       stroke="none"
                     >
                       {byCategory.map((c) => (
-                        <Cell key={c.categoryId ?? "uncategorized"} fill={c.categoryColor ?? "#94a3b8"} />
+                        <Cell
+                          key={c.categoryId ?? "uncategorized"}
+                          fill={c.categoryColor ?? "#94a3b8"}
+                        />
                       ))}
                     </Pie>
                     <Tooltip
@@ -247,13 +289,40 @@ export function ExpensesPage() {
           </div>
         </div>
       </section>
+      <button
+        type="button"
+        onClick={() => setDialogOpen(true)}
+        aria-label={historyT.addExpense}
+        className={
+          "fixed bottom-6 z-40 grid h-14 w-14 place-items-center rounded-full bg-brand text-primary-foreground shadow-lg shadow-brand/30 transition-transform hover:scale-105 active:scale-95 lg:bottom-8 " +
+          (isRtl ? "left-6 lg:left-8" : "right-6 lg:right-8")
+        }
+      >
+        <Plus className="h-6 w-6" />
+      </button>
+
+      <ExpenseFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        expense={null}
+        categories={categories}
+        currencies={currencies}
+        saving={creating}
+        error={formError}
+        onSubmit={handleSubmitExpense}
+      />
     </div>
   );
 }
 
 function ExpensesSkeleton({ dir }: { dir: "rtl" | "ltr" }) {
   return (
-    <div className="space-y-6 lg:space-y-8" aria-busy="true" aria-label="Loading expenses" dir={dir}>
+    <div
+      className="space-y-6 lg:space-y-8"
+      aria-busy="true"
+      aria-label="Loading expenses"
+      dir={dir}
+    >
       <div className="space-y-2">
         <div className="h-6 w-32 animate-pulse rounded-md bg-muted" />
         <div className="h-4 w-56 animate-pulse rounded-md bg-muted" />

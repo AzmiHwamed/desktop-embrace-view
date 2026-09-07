@@ -5,6 +5,7 @@ import { ArrowLeft, ExternalLink, MapPin, Star, Volume2, X } from "lucide-react"
 import { apiFetch, type ApiResponse } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAppSelector } from "@/app/hooks";
 import {
   Select,
   SelectContent,
@@ -32,9 +33,10 @@ type Detail = {
 };
 
 export function PlaceDetailsPage({ placeId }: { placeId: string }) {
+  const userLanguage = useAppSelector((state) => state.account.profile?.language?.code) ?? "en";
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState(userLanguage);
   const [spokenText, setSpokenText] = useState("");
   const [speaking, setSpeaking] = useState(false);
   const [description, setDescription] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
 
   useEffect(() => {
     apiFetch<ApiResponse<Detail>>(
-      `/guest/explore/place/${encodeURIComponent(placeId)}?languageCode=en`,
+      `/guest/explore/place/${encodeURIComponent(placeId)}?languageCode=${encodeURIComponent(userLanguage)}`,
     )
       .then(async (response) => {
         setDetail(response.data);
@@ -52,7 +54,7 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
             `/guest/explore/place/${encodeURIComponent(placeId)}/description`,
             {
               method: "POST",
-              body: JSON.stringify({ languageCode: "en" }),
+              body: JSON.stringify({ languageCode: userLanguage }),
             },
           );
           setDescription(generated.data.description);
@@ -65,7 +67,7 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
       .catch((reason) =>
         setError(reason instanceof Error ? reason.message : "Unable to load this place"),
       );
-  }, [placeId]);
+  }, [placeId, userLanguage]);
 
   async function playDescription() {
     setSpeaking(true);
