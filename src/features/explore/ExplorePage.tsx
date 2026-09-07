@@ -62,6 +62,12 @@ export function ExplorePage() {
     setLoading(true);
     setError(null);
     try {
+      if (typeof navigator !== "undefined" && "permissions" in navigator) {
+        const permission = await navigator.permissions.query({ name: "geolocation" });
+        if (permission.state === "denied") {
+          throw new DeviceLocationError("denied");
+        }
+      }
       const location = await getAccurateDeviceLocation({
         enableHighAccuracy: true,
         timeout: 12000,
@@ -89,14 +95,17 @@ export function ExplorePage() {
       );
       setPlaces(response.data.places);
     } catch (reason) {
+      const isLocationError = reason instanceof DeviceLocationError;
+      if (isLocationError) {
+        setPosition(null);
+        setPlaces([]);
+      }
       setError(
-        reason instanceof DeviceLocationError
+        isLocationError
           ? reason.reason === "insecure"
             ? t.secureLocationError
             : t.locationDenied
-          : reason instanceof Error
-            ? reason.message
-            : t.loadError,
+          : t.loadError,
       );
     } finally {
       setLoading(false);

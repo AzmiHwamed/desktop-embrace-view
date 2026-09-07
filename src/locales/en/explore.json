@@ -14,7 +14,7 @@
   "shopping": "Shopping",
   "searching": "Discovering nearby places...",
   "secureLocationError": "Location access requires HTTPS or localhost.",
-  "locationDenied": "Allow location access in your browser to explore nearby places.",
+  "locationDenied": "We can't show nearby places because you didn't allow location access. Enable location permission in your browser settings, then try again.",
   "loadError": "We couldn't load nearby places.",
   "locationProblem": "We need your location",
   "tryAgain": "Try again",
