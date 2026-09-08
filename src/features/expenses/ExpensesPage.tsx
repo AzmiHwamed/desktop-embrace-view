@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/ExpensesPage.tsx
 import { useEffect, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
@@ -98,7 +99,7 @@ export function ExpensesPage() {
     <div className="space-y-6 lg:space-y-8" dir={isRtl ? "rtl" : "ltr"}>
       <PageHeader title={t.title} subtitle={t.subtitle} />
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive"><ErrorText message={error} /></p>}
 
       <div className="flex gap-2">
         {rangeOptions.map((opt) => (

@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 import { useEffect, useState } from "react";
 import { Loader2, PlusCircle } from "lucide-react";
 
@@ -147,7 +148,7 @@ export function ExpenseFormDialog({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {(localError || error) && (
-            <p className="text-sm text-destructive">{localError ?? error}</p>
+            <p className="text-sm text-destructive"><ErrorText message={localError ?? error} /></p>
           )}
 
           <div className="grid grid-cols-2 gap-4">

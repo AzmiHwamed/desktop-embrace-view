@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/HistoryPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { Search, Download, Plus } from "lucide-react";
@@ -173,7 +174,7 @@ export function HistoryPage() {
         </Select>
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive"><ErrorText message={error} /></p>}
 
       <div className="surface-card overflow-hidden">
         <div className="hidden grid-cols-[1.5fr_2fr_1fr_1fr_auto] gap-4 border-b border-border bg-muted/50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground lg:grid">

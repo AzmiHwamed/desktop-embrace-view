@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/NotificationsPage.tsx
 import { useEffect } from "react";
 import { CheckCheck, ExternalLink, ShieldCheck, TrendingUp, Wallet } from "lucide-react";
@@ -125,7 +126,7 @@ export function NotificationsPage() {
 
       {error && (
         <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
+          <ErrorText message={error} />
         </p>
       )}
     </div>

@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/SubscriptionPage.tsx
 import { useEffect, useState } from "react";
 import { Check, Clock, Loader2 } from "lucide-react";
@@ -148,7 +149,7 @@ export function SubscriptionPage() {
 
       {(error || popupError) && (
         <p className="rounded-xl bg-destructive/10 px-3 py-2 text-center text-sm text-destructive">
-          {popupError ?? error}
+          <ErrorText message={popupError ?? error} />
         </p>
       )}
 

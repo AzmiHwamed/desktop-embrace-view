@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/ForgotPasswordPage.tsx
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -103,7 +104,7 @@ export function ForgotPasswordPage() {
                 </div>
                 {error && (
                   <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                    {error}
+                    <ErrorText message={error} />
                   </p>
                 )}
                 <Button
@@ -142,7 +143,7 @@ export function ForgotPasswordPage() {
                 </div>
                 {error && (
                   <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                    {error}
+                    <ErrorText message={error} />
                   </p>
                 )}
                 <Button
@@ -188,7 +189,7 @@ export function ForgotPasswordPage() {
                 </div>
                 {(localError || error) && (
                   <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                    {localError ?? error}
+                    <ErrorText message={localError ?? error} />
                   </p>
                 )}
                 <Button

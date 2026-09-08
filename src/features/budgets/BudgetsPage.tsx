@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 import { useEffect, useMemo, useState } from "react";
 import {
   Bell,
@@ -164,7 +165,7 @@ export function BudgetsPage() {
       />
 
       {error && (
-        <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>
+        <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive"><ErrorText message={error} /></p>
       )}
 
       {alerts.length > 0 && (
@@ -231,9 +232,10 @@ export function BudgetsPage() {
               .then(() => toast.success(t.planGenerated))
               .catch((generationError: unknown) =>
                 toast.error(
-                  generationError instanceof Error
+                  <ErrorText message={generationError instanceof Error
                     ? generationError.message
-                    : t.planGenerationFailed,
+                    : t.planGenerationFailed} />,
+                  { duration: 10000 },
                 ),
               )
           }
@@ -361,9 +363,10 @@ export function BudgetsPage() {
             toast.success(t.planGenerated);
           } catch (generationError) {
             toast.error(
-              generationError instanceof Error
+              <ErrorText message={generationError instanceof Error
                 ? generationError.message
-                : t.planGenerationFailed,
+                : t.planGenerationFailed} />,
+              { duration: 10000 },
             );
           }
         }}
@@ -988,7 +991,7 @@ function BudgetDialog({
               />
             </div>
           </div>
-          {localError && <p className="text-sm text-destructive">{localError}</p>}
+          {localError && <p className="text-sm text-destructive"><ErrorText message={localError} /></p>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>

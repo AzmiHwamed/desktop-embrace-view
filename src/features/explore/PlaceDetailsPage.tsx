@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
@@ -89,7 +90,7 @@ export function PlaceDetailsPage({ placeId }: { placeId: string }) {
     }
   }
 
-  if (error) return <div className="surface-card p-8 text-destructive">{error}</div>;
+  if (error) return <div className="surface-card p-8 text-destructive"><ErrorText message={error} /></div>;
   if (!detail) return <div className="surface-card p-8">Loading place…</div>;
   const photos = detail.photos.filter((photo) => photo.photoUri);
 

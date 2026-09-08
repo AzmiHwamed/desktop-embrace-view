@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/ConvertPage.tsx
 import { useEffect } from "react";
 import { ArrowLeftRight, Loader2 } from "lucide-react";
@@ -167,7 +168,7 @@ export function ConvertPage() {
 
           {error && (
             <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
+              <ErrorText message={error} />
             </p>
           )}
 

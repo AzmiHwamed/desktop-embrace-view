@@ -6,6 +6,7 @@ import {
   signOut as firebaseSignOut,
 } from "firebase/auth";
 import { firebaseAuth } from "./firebase";
+import { withFirebaseAuth } from "./firebase-session";
 import type { IdpProvider } from "@/features/auth/types";
 
 export class ProviderLoginCancelledError extends Error {
@@ -73,6 +74,10 @@ function waitForPopupCancellation(): {
 // sign-out, `ensureFirebaseSession` would see a `currentUser` already set
 // from the popup and skip re-authenticating with the proper custom claims.
 export async function getProviderToken(provider: IdpProvider): Promise<string> {
+  return withFirebaseAuth(() => getProviderTokenInSession(provider));
+}
+
+async function getProviderTokenInSession(provider: IdpProvider): Promise<string> {
   const authProvider = provider === "google.com" ? new GoogleAuthProvider() : new FacebookAuthProvider();
 
   const cancellation = waitForPopupCancellation();

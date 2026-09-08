@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 import { useState } from "react";
 import { Check, ExternalLink, LocateFixed, MapPin, Search, X } from "lucide-react";
 
@@ -116,7 +117,7 @@ export function MerchantMatcher({ receipt, selected, languageCode, onSelect }: P
               <InlineLoading label={t.searchingNearby} />
             </div>
           ) : error ? (
-            <div className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive">{error}</div>
+            <div className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive"><ErrorText message={error} /></div>
           ) : candidates.length === 0 ? (
             <div className="py-8 text-center">
               <Search className="mx-auto h-8 w-8 text-muted-foreground" />

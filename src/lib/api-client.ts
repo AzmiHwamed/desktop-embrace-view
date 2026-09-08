@@ -1,4 +1,5 @@
 // lib/api-client.ts
+import { assertSession, getSession, invalidateSession } from "./session-lifecycle";
 
 export const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"] ?? "http://localhost:3000";
 
@@ -104,6 +105,8 @@ export function storeTokens(accessToken: string, refreshToken?: string | null): 
 }
 
 export function clearTokens(): void {
+  invalidateSession();
+  refreshPromise = null;
   if (typeof window === "undefined") return;
 
   localStorage.removeItem(TOKEN_STORAGE_KEY);
@@ -145,20 +148,22 @@ function getErrorMessage(payload: unknown, status: number): string {
     return fallback;
   }
 
-  const error = payload as {
-    message?: string;
-    error?: string;
-    body?: string;
-    title?: string;
-  };
-
-  return error.message ?? error.error ?? error.body ?? error.title ?? fallback;
+  const error = payload as Record<string, unknown>;
+  for (const value of [error.message, error.error, error.body, error.title]) {
+    if (typeof value === "string" && value.trim()) return value;
+    if (Array.isArray(value)) {
+      const messages = value.filter((item): item is string => typeof item === "string" && !!item.trim());
+      if (messages.length) return messages.join("\n");
+    }
+  }
+  return fallback;
 }
 
 async function refreshAccessToken(): Promise<string> {
   if (refreshPromise) return refreshPromise;
 
-  refreshPromise = (async () => {
+  const session = getSession();
+  const request = (async () => {
     const refreshToken = getStoredRefreshToken();
 
     if (!refreshToken) {
@@ -166,6 +171,7 @@ async function refreshAccessToken(): Promise<string> {
     }
 
     const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+      signal: session.signal,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -179,6 +185,7 @@ async function refreshAccessToken(): Promise<string> {
     });
 
     const payload = await readPayload(response);
+    assertSession(session.generation);
 
     if (!response.ok) {
       throw new ApiError(getErrorMessage(payload, response.status), response.status, payload);
@@ -204,11 +211,12 @@ async function refreshAccessToken(): Promise<string> {
 
     return accessToken;
   })();
+  refreshPromise = request;
 
   try {
-    return await refreshPromise;
+    return await request;
   } finally {
-    refreshPromise = null;
+    if (refreshPromise === request) refreshPromise = null;
   }
 }
 
@@ -217,6 +225,7 @@ export async function apiFetch<T>(
   init: RequestInit = {},
   isRetry = false,
 ): Promise<T> {
+  const session = getSession();
   const isPublicAuthRequest = isPublicPath(path, init.method ?? "GET");
 
   // Do not hit protected endpoints again after terminal authentication failure.
@@ -231,6 +240,7 @@ export async function apiFetch<T>(
     try {
       token = await refreshAccessToken();
     } catch {
+      assertSession(session.generation);
       return expireSession();
     }
   }
@@ -246,6 +256,7 @@ export async function apiFetch<T>(
     try {
       token = await refreshAccessToken();
     } catch {
+      assertSession(session.generation);
       return expireSession();
     }
   }
@@ -263,10 +274,13 @@ export async function apiFetch<T>(
     headers.delete("Authorization");
   }
 
+  assertSession(session.generation);
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers,
+    signal: init.signal ? AbortSignal.any([init.signal, session.signal]) : session.signal,
   });
+  assertSession(session.generation);
 
   if (response.status === 401) {
     // The request already used a refreshed token, but it was rejected.
@@ -280,13 +294,16 @@ export async function apiFetch<T>(
 
     try {
       await refreshAccessToken();
+      assertSession(session.generation);
       return await apiFetch<T>(path, init, true);
     } catch {
+      assertSession(session.generation);
       return expireSession();
     }
   }
 
   const payload = await readPayload(response);
+  assertSession(session.generation);
 
   if (!response.ok) {
     throw new ApiError(getErrorMessage(payload, response.status), response.status, payload);

@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/LoginPage.tsx
 import { Link } from "@tanstack/react-router";
 import { Loader2, Plane } from "lucide-react";
@@ -139,7 +140,7 @@ export function LoginPage() {
 
               {error && (
                 <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {error}
+                  <ErrorText message={error} />
                 </p>
               )}
 

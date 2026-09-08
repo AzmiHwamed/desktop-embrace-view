@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/SupportChatPage.tsx
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Send } from "lucide-react";
@@ -21,6 +22,7 @@ import {
 import { firebaseDb } from "@/lib/firebase";
 import { ensureFirebaseSession } from "@/lib/firebase-session";
 import type { Message } from "./types";
+import { getSession } from "@/lib/session-lifecycle";
 
 export function SupportChatPage({ onBack }: { onBack?: () => void }) {
   const dispatch = useAppDispatch();
@@ -48,14 +50,16 @@ export function SupportChatPage({ onBack }: { onBack?: () => void }) {
     dispatch(markConversationRead(conversation.id));
 
     let cancelled = false;
+    const session = getSession();
     const messagesRef = ref(firebaseDb, `chats/messages/${conversation.id}`);
 
     ensureFirebaseSession()
       .then(() => {
-        if (cancelled) return;
+        if (cancelled || session.generation !== getSession().generation) return;
         dispatch(realtimeConnectionChanged(true));
 
         onValue(messagesRef, (snapshot) => {
+          if (cancelled || session.generation !== getSession().generation) return;
           const value = snapshot.val();
           if (!value) return;
           Object.entries(value as Record<string, Omit<Message, "id" | "conversationId">>).forEach(
@@ -73,6 +77,7 @@ export function SupportChatPage({ onBack }: { onBack?: () => void }) {
         });
       })
       .catch(() => {
+        if (cancelled || session.generation !== getSession().generation) return;
         // RTDB is best-effort for live delivery — REST history above already
         // loaded, so the conversation still works, just without live push.
         dispatch(realtimeConnectionChanged(false));
@@ -137,7 +142,7 @@ export function SupportChatPage({ onBack }: { onBack?: () => void }) {
 
         <div className="flex-1 space-y-2 overflow-y-auto px-5 py-4">
           {loading && <InlineLoading label={t.loadingConversation} className="p-4" />}
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive"><ErrorText message={error} /></p>}
 
           {!loading && messages.length === 0 && (
             <p className="my-auto text-center text-sm text-muted-foreground">

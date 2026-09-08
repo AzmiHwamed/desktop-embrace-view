@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/SignupPage.tsx
 import { Link } from "@tanstack/react-router";
 import { Loader2, Plane } from "lucide-react";
@@ -132,7 +133,7 @@ export function SignupPage() {
 
               {(localError || error) && (
                 <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  {localError ?? error}
+                  <ErrorText message={localError ?? error} />
                 </p>
               )}
 

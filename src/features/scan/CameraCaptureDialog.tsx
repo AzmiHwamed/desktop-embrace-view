@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, CameraOff, Loader2, RefreshCw, RotateCcw } from "lucide-react";
 
@@ -161,7 +162,7 @@ export function CameraCaptureDialog({
             <div className="absolute inset-0 grid place-items-center p-6 text-center text-white">
               <div>
                 <CameraOff className="mx-auto h-10 w-10" />
-                <p className="mt-3 font-semibold">{error}</p>
+                <p className="mt-3 font-semibold"><ErrorText message={error} /></p>
                 <Button className="mt-4" variant="secondary" onClick={() => void startCamera()}>
                   <RefreshCw className="h-4 w-4" />
                   {t.retryCamera}

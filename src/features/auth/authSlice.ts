@@ -1,7 +1,8 @@
 // features/auth/authSlice.ts
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { apiFetch, storeTokens, clearTokens, TOKEN_STORAGE_KEY } from "@/lib/api-client";
+import { apiFetch, storeTokens, TOKEN_STORAGE_KEY } from "@/lib/api-client";
+import { assertSession, getSession } from "@/lib/session-lifecycle";
 
 import type {
   AuthState,
@@ -34,12 +35,14 @@ const initialState: AuthState = {
 export const login = createAsyncThunk<LoginResponse, LoginCredentials, { rejectValue: string }>(
   "auth/login",
   async (credentials, { rejectWithValue }) => {
+    const session = getSession();
     try {
       const data = await apiFetch<LoginResponse>("/auth/login", {
         method: "POST",
         body: JSON.stringify(credentials),
       });
       if (data && data.data && data.data.idToken) {
+        assertSession(session.generation);
         storeTokens(data.data.idToken, data.data.refreshToken);
       }
       return data;
@@ -52,12 +55,14 @@ export const login = createAsyncThunk<LoginResponse, LoginCredentials, { rejectV
 export const register = createAsyncThunk<LoginResponse, RegisterCredentials, { rejectValue: string }>(
   "auth/register",
   async (credentials, { rejectWithValue }) => {
+    const session = getSession();
     try {
       const data = await apiFetch<LoginResponse>("/auth/register", {
         method: "POST",
         body: JSON.stringify(credentials),
       });
       if (data && data.data && data.data.idToken) {
+        assertSession(session.generation);
         storeTokens(data.data.idToken, data.data.refreshToken);
       }
       return data;
@@ -70,13 +75,16 @@ export const register = createAsyncThunk<LoginResponse, RegisterCredentials, { r
 export const loginWithProvider = createAsyncThunk<LoginResponse, IdpProvider, { rejectValue: string | null }>(
   "auth/loginWithProvider",
   async (provider, { rejectWithValue }) => {
+    const session = getSession();
     try {
       const token = await getProviderToken(provider);
+      assertSession(session.generation);
       const data = await apiFetch<LoginResponse>("/auth/oauth", {
         method: "POST",
         body: JSON.stringify({ provider: provider, token: token }),
       });
       if (data && data.data && data.data.idToken) {
+        assertSession(session.generation);
         storeTokens(data.data.idToken, data.data.refreshToken);
       }
       return data;
@@ -190,7 +198,6 @@ const authSlice = createSlice({
       }
     },
     continueAsGuest(state) {
-      clearTokens();
       if (typeof window !== "undefined") window.localStorage.setItem("smarttravel.guest", "true");
       state.user = null;
       state.token = null;
@@ -199,7 +206,6 @@ const authSlice = createSlice({
       state.isGuest = true;
     },
     logout(state) {
-      clearTokens();
       if (typeof window !== "undefined") window.localStorage.removeItem("smarttravel.guest");
       state.user = null;
       state.token = null;

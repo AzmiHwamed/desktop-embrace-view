@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // features/scan/SaveToHistoryModal.tsx
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, PlusCircle } from "lucide-react";
@@ -246,7 +247,7 @@ export function SaveToHistoryModal({ open, onOpenChange, receipt, matchedMerchan
           </div>
 
           {(localError || saveError) && (
-            <p className="text-sm text-destructive">{localError ?? saveError}</p>
+            <p className="text-sm text-destructive"><ErrorText message={localError ?? saveError} /></p>
           )}
         </div>
 

@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/OnboardingPage.tsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
@@ -165,13 +166,13 @@ export function OnboardingPage() {
 
             {preferencesError && (
               <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
-                {preferencesError}
+                <ErrorText message={preferencesError} />
               </p>
             )}
 
             {error && (
               <p className="rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
+                <ErrorText message={error} />
               </p>
             )}
 

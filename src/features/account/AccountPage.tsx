@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/AccountPage.tsx
 import { useEffect, useRef, useState } from "react";
 import { LogOut, MapPin, Receipt, CreditCard, Trash2 } from "lucide-react";
@@ -331,7 +332,7 @@ export function AccountPage() {
 
         <div className="surface-card p-5 lg:p-6">
           <h2 className="font-display text-lg font-bold">{t.editProfile}</h2>
-          {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+          {error && <p className="mt-2 text-sm text-destructive"><ErrorText message={error} /></p>}
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="displayName">{t.fullName}</Label>
@@ -420,7 +421,7 @@ export function AccountPage() {
 
             {preferencesError && (
               <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-700 md:col-span-2 dark:text-amber-300">
-                {preferencesError}
+                <ErrorText message={preferencesError} />
               </p>
             )}
           </div>
@@ -477,7 +478,7 @@ export function AccountPage() {
                   placeholder={profile?.email ?? "Email"}
                   autoComplete="off"
                 />
-                {deleteError && <p className="text-sm text-destructive">{deleteError}</p>}
+                {deleteError && <p className="text-sm text-destructive"><ErrorText message={deleteError} /></p>}
                 <AlertDialogFooter>
                   <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
                   <AlertDialogAction

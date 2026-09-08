@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useRef, type ReactNode } from "react";
 import { Provider } from "react-redux";
+import { Toaster } from "@/components/ui/sonner";
 import { applyDocumentLanguage } from "../lib/language-preference";
 
 import { makeStore, type AppStore } from "../app/store";
@@ -17,6 +18,11 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppLayout } from "../components/AppLayout";
 import { SubscriptionGate } from "../components/SubscriptionGate";
+import { useAppSelector, useAppDispatch } from "@/app/hooks";
+import { logout } from "@/features/auth/authSlice";
+import { TOKEN_STORAGE_KEY } from "@/lib/api-client";
+import { getSession } from "@/lib/session-lifecycle";
+import { toast } from "sonner";
 
 
 
@@ -148,13 +154,36 @@ function RootComponent() {
   return (
     <Provider store={storeRef.current}>
       <QueryClientProvider client={queryClient}>
-        <AppLayout>
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <SubscriptionGate>
-            <Outlet />
-          </SubscriptionGate>
-        </AppLayout>
+        <SessionContent queryClient={queryClient} />
       </QueryClientProvider>
     </Provider>
+  );
+}
+
+function SessionContent({ queryClient }: { queryClient: QueryClient }) {
+  const dispatch = useAppDispatch();
+  // Every boundary resets auth, triggering this selector and a fresh UI tree.
+  useAppSelector((state) => state.auth);
+  const generation = getSession().generation;
+  useEffect(() => {
+    queryClient.clear();
+    toast.dismiss();
+  }, [generation, queryClient]);
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if ((event.key === TOKEN_STORAGE_KEY && !event.newValue) || event.key === null) {
+        dispatch(logout());
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [dispatch]);
+  return (
+    <div key={generation} className="contents">
+      <AppLayout>
+        <SubscriptionGate><Outlet /></SubscriptionGate>
+      </AppLayout>
+      <Toaster />
+    </div>
   );
 }

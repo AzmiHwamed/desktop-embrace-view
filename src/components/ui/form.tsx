@@ -1,4 +1,5 @@
 import * as React from "react";
+import { ErrorText } from "@/components/ErrorText";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import { Slot } from "@radix-ui/react-slot";
 import {
@@ -153,7 +154,7 @@ const FormMessage = React.forwardRef<
       className={cn("text-[0.8rem] font-medium text-destructive", className)}
       {...props}
     >
-      {body}
+      {error ? <ErrorText message={String(error.message ?? "")} /> : body}
     </p>
   );
 });

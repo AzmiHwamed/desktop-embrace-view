@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/Dashboard.tsx
 import { useEffect } from "react";
 import { Link } from "@tanstack/react-router";
@@ -143,7 +144,7 @@ export function Dashboard() {
         }
       />
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive"><ErrorText message={error} /></p>}
 
       <div className="flex gap-2">
         {rangeOptions.map((opt) => (

@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 // pages/SettingsPage.tsx
 import { useEffect, useMemo, useState } from "react";
 import { HelpCircle, MessageCircle, Search, ShieldCheck } from "lucide-react";
@@ -173,7 +174,7 @@ export function SettingsPage() {
             </div>
 
             {loading && <p className="mt-3 text-sm text-muted-foreground">{t.loading}</p>}
-            {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+            {error && <p className="mt-3 text-sm text-destructive"><ErrorText message={error} /></p>}
 
             {!loading && !error && filteredFaqs.length === 0 && (
               <p className="mt-4 text-sm text-muted-foreground">

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ErrorText } from "@/components/ErrorText";
 import {
   ArrowLeftRight,
   CheckCheck,
@@ -170,7 +171,9 @@ export function InterpreterPage() {
       translatedAudioRef.current = audio;
       await audio.play().catch(() => undefined);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t.processFailed);
+      toast.error(<ErrorText message={error instanceof Error ? error.message : t.processFailed} />, {
+        duration: 10000,
+      });
     } finally {
       setProcessing(false);
     }

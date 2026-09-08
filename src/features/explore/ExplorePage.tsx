@@ -1,3 +1,4 @@
+import { ErrorText } from "@/components/ErrorText";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Building2,
@@ -177,7 +178,7 @@ export function ExplorePage() {
           <div>
             <MapPin className="mx-auto h-10 w-10 text-destructive" />
             <h2 className="mt-4 font-bold">{t.locationProblem}</h2>
-            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{error}</p>
+            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground"><ErrorText message={error} /></p>
             <Button className="mt-5" onClick={() => void loadNearby()}>
               <RefreshCw className="h-4 w-4" />
               {t.tryAgain}
