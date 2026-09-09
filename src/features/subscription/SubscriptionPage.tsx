@@ -1,3 +1,4 @@
+import { LegalLinks } from "@/features/legal/LegalPage";
 import { ErrorText } from "@/components/ErrorText";
 // pages/SubscriptionPage.tsx
 import { useEffect, useState } from "react";
@@ -134,6 +135,7 @@ export function SubscriptionPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-10 lg:space-y-8" dir={isRtl ? "rtl" : "ltr"}>
+      <LegalLinks />
       <div className="text-center">
         <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-accent text-accent-foreground">
           <Clock className="h-6 w-6" />

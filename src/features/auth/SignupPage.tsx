@@ -1,3 +1,4 @@
+import { LegalLinks } from "@/features/legal/LegalPage";
 import { ErrorText } from "@/components/ErrorText";
 // pages/SignupPage.tsx
 import { Link } from "@tanstack/react-router";
@@ -164,6 +165,7 @@ export function SignupPage() {
             >
               Continue as guest
             </Button>
+            <div className="mt-6"><LegalLinks /></div>
           </CardContent>
         </Card>
       </div>

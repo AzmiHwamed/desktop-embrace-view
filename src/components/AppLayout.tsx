@@ -39,7 +39,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/forgot-password" ||
-    pathname === "/onboarding";
+    pathname === "/onboarding" ||
+    pathname === "/terms" ||
+    pathname === "/privacy";
 
   const guestAllowedPaths = ["/scan", "/convert", "/interpreter", "/explore"];
   const isGuestAllowedPage = guestAllowedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));

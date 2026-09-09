@@ -22,10 +22,12 @@ import { Route as InterpreterRouteImport } from './routes/interpreter'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ScanRouteImport } from './routes/scan'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SubscribeRouteImport } from './routes/subscribe'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ExplorePlacePlaceIdRouteImport } from './routes/explore_.place.$placeId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -93,6 +95,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ScanRoute = ScanRouteImport.update({
   id: '/scan',
   path: '/scan',
@@ -111,6 +118,11 @@ const SignupRoute = SignupRouteImport.update({
 const SubscribeRoute = SubscribeRouteImport.update({
   id: '/subscribe',
   path: '/subscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExplorePlacePlaceIdRoute = ExplorePlacePlaceIdRouteImport.update({
@@ -133,10 +145,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/subscribe': typeof SubscribeRoute
+  '/terms': typeof TermsRoute
   '/explore/place/$placeId': typeof ExplorePlacePlaceIdRoute
 }
 export interface FileRoutesByTo {
@@ -153,10 +167,12 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/subscribe': typeof SubscribeRoute
+  '/terms': typeof TermsRoute
   '/explore/place/$placeId': typeof ExplorePlacePlaceIdRoute
 }
 export interface FileRoutesById {
@@ -174,10 +190,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
+  '/privacy': typeof PrivacyRoute
   '/scan': typeof ScanRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
   '/subscribe': typeof SubscribeRoute
+  '/terms': typeof TermsRoute
   '/explore_/place/$placeId': typeof ExplorePlacePlaceIdRoute
 }
 export interface FileRouteTypes {
@@ -196,10 +214,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/notifications'
     | '/onboarding'
+    | '/privacy'
     | '/scan'
     | '/settings'
     | '/signup'
     | '/subscribe'
+    | '/terms'
     | '/explore/place/$placeId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -216,10 +236,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/notifications'
     | '/onboarding'
+    | '/privacy'
     | '/scan'
     | '/settings'
     | '/signup'
     | '/subscribe'
+    | '/terms'
     | '/explore/place/$placeId'
   id:
     | '__root__'
@@ -236,10 +258,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/notifications'
     | '/onboarding'
+    | '/privacy'
     | '/scan'
     | '/settings'
     | '/signup'
     | '/subscribe'
+    | '/terms'
     | '/explore_/place/$placeId'
   fileRoutesById: FileRoutesById
 }
@@ -257,10 +281,12 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
+  PrivacyRoute: typeof PrivacyRoute
   ScanRoute: typeof ScanRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
   SubscribeRoute: typeof SubscribeRoute
+  TermsRoute: typeof TermsRoute
   ExplorePlacePlaceIdRoute: typeof ExplorePlacePlaceIdRoute
 }
 
@@ -357,6 +383,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/scan': {
       id: '/scan'
       path: '/scan'
@@ -385,6 +418,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explore_/place/$placeId': {
       id: '/explore_/place/$placeId'
       path: '/explore/place/$placeId'
@@ -409,10 +449,12 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
+  PrivacyRoute: PrivacyRoute,
   ScanRoute: ScanRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
   SubscribeRoute: SubscribeRoute,
+  TermsRoute: TermsRoute,
   ExplorePlacePlaceIdRoute: ExplorePlacePlaceIdRoute,
 }
 export const routeTree = rootRouteImport

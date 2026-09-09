@@ -1,3 +1,4 @@
+import { LegalLinks } from "@/features/legal/LegalPage";
 import { ErrorText } from "@/components/ErrorText";
 // pages/SettingsPage.tsx
 import { useEffect, useMemo, useState } from "react";
@@ -223,6 +224,10 @@ export function SettingsPage() {
           </div>
         </div>
       </div>
+      <section className="surface-card p-5">
+        <h2 className="mb-4 font-display text-lg font-bold">Legal</h2>
+        <LegalLinks />
+      </section>
     </div>
   );
 }
