@@ -1,5 +1,5 @@
 // components/TopNav.tsx
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { Bell, LogOut, Plus, Search, ScanLine, Clock } from "lucide-react";
 
 import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
@@ -18,7 +18,6 @@ import topNavStrings from "@/locales/en/topnav.json";
 
 export function TopNav({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const statusT = useTranslations("subscriptionStatus", subscriptionStatusStrings);
   const t = useTranslations("topnav", topNavStrings);
   const isGuest = useAppSelector((s) => s.auth.isGuest);
@@ -34,7 +33,9 @@ export function TopNav({ isAuthenticated = false }: { isAuthenticated?: boolean 
 
   const handleSignOut = () => {
     dispatch(logout());
-    navigate({ to: "/login", replace: true });
+    // Use a document navigation here instead of depending on the client router
+    // after its auth/session state has been torn down.
+    window.location.replace("/login");
   };
 
   const { statusLabel, hint } = getSubscriptionDisplay(profile, statusT, interpolate);

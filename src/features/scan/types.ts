@@ -32,19 +32,15 @@ export type Receipt = {
   convertedTotal?: number | null;
   paymentMethod: string | null;
   items: ReceiptItem[];
+  /** Extracted text lines for documents whose documentType is "other". */
+  otherText?: string[] | null;
 };
 
 export type TranslationStatus = "idle" | "translating" | "done" | "error";
 export type SaveStatus = "idle" | "saving" | "done" | "error";
 export type CategoriesStatus = "idle" | "loading" | "done" | "error";
 export type ScanErrorCode =
-  | "network"
-  | "timeout"
-  | "unavailable"
-  | "rateLimit"
-  | "invalidFile"
-  | "server"
-  | "unknown";
+  "network" | "timeout" | "unavailable" | "rateLimit" | "invalidFile" | "server" | "unknown";
 
 export type ExpenseCategory = {
   id: string;

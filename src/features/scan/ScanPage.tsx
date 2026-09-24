@@ -55,6 +55,7 @@ import {
 import type { ScanErrorCode } from "./types";
 
 const MENU_DOCUMENT_TYPES = new Set(["menu", "restaurant menu"]);
+const RECEIPT_DOCUMENT_TYPES = new Set(["receipt", "shopping bill", "invoice"]);
 
 function formatAmount(value: number | string | null | undefined): string {
   if (value === null || value === undefined) return "-";
@@ -146,7 +147,10 @@ export function ScanPage() {
     setIsSaveModalOpen(true);
   }
 
-  const isMenu = result ? MENU_DOCUMENT_TYPES.has(result.documentType) : false;
+  const normalizedDocumentType = result?.documentType.trim().toLowerCase();
+  const isMenu = normalizedDocumentType ? MENU_DOCUMENT_TYPES.has(normalizedDocumentType) : false;
+  const isOtherDocument = normalizedDocumentType === "other";
+  const isReceiptLike = result ? RECEIPT_DOCUMENT_TYPES.has(normalizedDocumentType ?? "") : false;
   const isScanning = status === "uploading";
   const isTranslating = translationStatus === "translating";
   const activeErrorCode = errorCode ?? translationErrorCode;
@@ -267,10 +271,27 @@ export function ScanPage() {
             )}
 
             <h2 className="font-display text-lg font-bold">
-              {previewUrl ? fileName : t.dropReceiptHere}
+              {previewUrl ? fileName : t.dropDocumentHere}
             </h2>
 
             {!previewUrl && <p className="text-sm text-muted-foreground">{t.fileHint}</p>}
+
+            {!previewUrl && (
+              <div
+                className="flex flex-wrap justify-center gap-2"
+                aria-label={t.supportedDocuments}
+              >
+                {[t.receipts, t.menus, t.invoices, t.tickets, t.priceLists].map((documentType) => (
+                  <Badge
+                    key={documentType}
+                    variant="secondary"
+                    className="rounded-full px-2.5 py-1"
+                  >
+                    {documentType}
+                  </Badge>
+                ))}
+              </div>
+            )}
 
             <input
               ref={inputRef}
@@ -309,11 +330,18 @@ export function ScanPage() {
                         <BrandLoader size="sm" />
                         {t.extracting}
                       </span>
+                    ) : isOtherDocument ? (
+                      t.plainTextDocument
                     ) : (
-                      renderName(result?.merchant, translatedResult?.merchant)
+                      renderName(
+                        result?.merchant ?? result?.documentType,
+                        translatedResult?.merchant,
+                      )
                     )}
                   </h2>
-                  <p className="text-xs text-muted-foreground">{result?.language ?? "-"}</p>
+                  <p className="text-xs capitalize text-muted-foreground">
+                    {result?.documentType ?? t.documentDetails} · {result?.language ?? "-"}
+                  </p>
                 </div>
               </div>
 
@@ -329,7 +357,7 @@ export function ScanPage() {
               )}
             </div>
 
-            {!isScanning && result && !isMenu && (
+            {!isScanning && result && isReceiptLike && (
               <MerchantMatcher
                 receipt={result}
                 selected={matchedMerchant}
@@ -350,7 +378,20 @@ export function ScanPage() {
 
               {!isScanning && result && display && (
                 <>
-                  {isMenu ? (
+                  {isOtherDocument ? (
+                    <section className="m-5 overflow-hidden rounded-2xl border bg-muted/20">
+                      <div className="border-b bg-muted/50 px-4 py-3">
+                        <h3 className="text-sm font-semibold">{t.extractedText}</h3>
+                      </div>
+                      {display.otherText && display.otherText.length > 0 ? (
+                        <pre className="overflow-x-auto whitespace-pre-wrap break-words p-4 font-sans text-sm leading-6 text-foreground">
+                          {display.otherText.join("\n")}
+                        </pre>
+                      ) : (
+                        <p className="p-4 text-sm text-muted-foreground">{t.noExtractedText}</p>
+                      )}
+                    </section>
+                  ) : isMenu ? (
                     <>
                       <div className="grid grid-cols-[2fr_3fr_1fr] gap-3 bg-muted p-4 text-xs font-bold">
                         <span>{t.dish}</span>
@@ -445,7 +486,7 @@ export function ScanPage() {
             </div>
 
             <div className="flex shrink-0 flex-wrap items-center gap-2 border-t p-5">
-              {!isGuest && (
+              {!isGuest && !isOtherDocument && (
                 <Button disabled={!result} onClick={openSaveModal}>
                   {t.saveToHistory}
                 </Button>
@@ -489,7 +530,7 @@ export function ScanPage() {
         </div>
       )}
 
-      {result && (
+      {result && !isOtherDocument && (
         <SaveToHistoryModal
           open={isSaveModalOpen}
           onOpenChange={setIsSaveModalOpen}

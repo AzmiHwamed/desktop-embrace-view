@@ -107,8 +107,6 @@ export function AccountPage() {
     referenceLoaded,
   } = useAppSelector((s) => s.account);
 
-  const isRtl = isRtlLanguage(profile?.language?.code);
-
   const [displayName, setDisplayName] = useState("");
   const [currencyId, setCurrencyId] = useState("");
   const [currentCountryId, setCurrentCountryId] = useState("");
@@ -122,6 +120,10 @@ export function AccountPage() {
   const [preferencesError, setPreferencesError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const preferenceRequest = useRef(0);
+  const selectedLanguageCode = languages.find((language) => language.id === languageId)?.code;
+  // Preview direction as soon as a language is selected, before the profile
+  // is saved and fetched again.
+  const isRtl = isRtlLanguage(selectedLanguageCode ?? profile?.language?.code);
 
   useEffect(() => {
     dispatch(fetchProfile());
@@ -251,6 +253,13 @@ export function AccountPage() {
     }
   }
 
+  function handleLogout() {
+    dispatch(logout());
+    // A document navigation is reliable even while logout remounts the app's
+    // authenticated layout and invalidates in-flight requests.
+    window.location.replace("/login");
+  }
+
   const initials =
     displayName
       .split(" ")
@@ -288,7 +297,7 @@ export function AccountPage() {
         />
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.6fr] lg:gap-6">
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.6fr] lg:gap-6 rtl:lg:grid-cols-[1.6fr_1fr]">
         <div className="surface-card p-6 text-center">
           <Avatar className="mx-auto h-20 w-20">
             {previewUrl || profile?.photoURL ? (
@@ -311,7 +320,12 @@ export function AccountPage() {
           <Button variant="outline" className="mt-5 w-full rounded-xl" onClick={handlePickPhoto}>
             {t.changePhoto}
           </Button>
-          <Button variant="ghost" className="mt-2 w-full rounded-xl text-destructive">
+          <Button
+            type="button"
+            variant="ghost"
+            className="mt-2 w-full rounded-xl text-destructive"
+            onClick={handleLogout}
+          >
             <LogOut className="h-4 w-4" />
             {t.logOut}
           </Button>
@@ -332,7 +346,11 @@ export function AccountPage() {
 
         <div className="surface-card p-5 lg:p-6">
           <h2 className="font-display text-lg font-bold">{t.editProfile}</h2>
-          {error && <p className="mt-2 text-sm text-destructive"><ErrorText message={error} /></p>}
+          {error && (
+            <p className="mt-2 text-sm text-destructive">
+              <ErrorText message={error} />
+            </p>
+          )}
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="displayName">{t.fullName}</Label>
@@ -350,13 +368,15 @@ export function AccountPage() {
                 type="email"
                 value={profile?.email ?? ""}
                 disabled
-                className="h-11 rounded-xl"
+                dir="ltr"
+                className="h-11 rounded-xl text-left"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="country">{t.country}</Label>
               <Select
+                dir={isRtl ? "rtl" : "ltr"}
                 value={currentCountryId}
                 onValueChange={handleCountryChange}
                 disabled={referenceLoading}
@@ -364,7 +384,7 @@ export function AccountPage() {
                 <SelectTrigger id="country" className="h-11 rounded-xl">
                   <SelectValue placeholder={t.selectCountry} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent dir={isRtl ? "rtl" : "ltr"}>
                   {countries.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.flag ? `${c.flag} ` : ""}
@@ -378,6 +398,7 @@ export function AccountPage() {
             <div className="space-y-2">
               <Label htmlFor="currency">{t.homeCurrency}</Label>
               <Select
+                dir={isRtl ? "rtl" : "ltr"}
                 value={currencyId}
                 onValueChange={setCurrencyId}
                 disabled={referenceLoading || preferencesLoading || !currentCountryId}
@@ -387,7 +408,7 @@ export function AccountPage() {
                     placeholder={preferencesLoading ? t.detectingCurrency : t.selectCurrency}
                   />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent dir={isRtl ? "rtl" : "ltr"}>
                   {currencies.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.code} — {c.name}
@@ -400,6 +421,7 @@ export function AccountPage() {
             <div className="space-y-2">
               <Label htmlFor="language">{t.language}</Label>
               <Select
+                dir={isRtl ? "rtl" : "ltr"}
                 value={languageId}
                 onValueChange={setLanguageId}
                 disabled={referenceLoading || preferencesLoading || !currentCountryId}
@@ -409,7 +431,7 @@ export function AccountPage() {
                     placeholder={preferencesLoading ? t.detectingLanguage : t.selectLanguage}
                   />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent dir={isRtl ? "rtl" : "ltr"}>
                   {languages.map((l) => (
                     <SelectItem key={l.id} value={l.id}>
                       {l.name}
@@ -425,7 +447,7 @@ export function AccountPage() {
               </p>
             )}
           </div>
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="mt-6 flex flex-wrap gap-2 text-start">
             <Button
               className="bg-brand rounded-xl shadow-brand"
               onClick={handleSave}
@@ -478,7 +500,11 @@ export function AccountPage() {
                   placeholder={profile?.email ?? "Email"}
                   autoComplete="off"
                 />
-                {deleteError && <p className="text-sm text-destructive"><ErrorText message={deleteError} /></p>}
+                {deleteError && (
+                  <p className="text-sm text-destructive">
+                    <ErrorText message={deleteError} />
+                  </p>
+                )}
                 <AlertDialogFooter>
                   <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
                   <AlertDialogAction
