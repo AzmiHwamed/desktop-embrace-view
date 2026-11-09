@@ -18,6 +18,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppLayout } from "../components/AppLayout";
 import { SubscriptionGate } from "../components/SubscriptionGate";
+import { TokenPurchaseDialog } from "@/components/TokenPurchaseDialog";
 import { useAppSelector, useAppDispatch } from "@/app/hooks";
 import { logout } from "@/features/auth/authSlice";
 import { TOKEN_STORAGE_KEY } from "@/lib/api-client";
@@ -184,6 +185,7 @@ function SessionContent({ queryClient }: { queryClient: QueryClient }) {
         <SubscriptionGate><Outlet /></SubscriptionGate>
       </AppLayout>
       <Toaster />
+      <TokenPurchaseDialog />
     </div>
   );
 }

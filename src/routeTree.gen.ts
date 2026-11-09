@@ -14,6 +14,7 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as BudgetsRouteImport } from './routes/budgets'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as ConvertRouteImport } from './routes/convert'
+import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -53,6 +54,11 @@ const ChatRoute = ChatRouteImport.update({
 const ConvertRoute = ConvertRouteImport.update({
   id: '/convert',
   path: '/convert',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeleteAccountRoute = DeleteAccountRouteImport.update({
+  id: '/delete-account',
+  path: '/delete-account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExpensesRoute = ExpensesRouteImport.update({
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/budgets': typeof BudgetsRoute
   '/chat': typeof ChatRoute
   '/convert': typeof ConvertRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/expenses': typeof ExpensesRoute
   '/explore': typeof ExploreRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/budgets': typeof BudgetsRoute
   '/chat': typeof ChatRoute
   '/convert': typeof ConvertRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/expenses': typeof ExpensesRoute
   '/explore': typeof ExploreRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/budgets': typeof BudgetsRoute
   '/chat': typeof ChatRoute
   '/convert': typeof ConvertRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/expenses': typeof ExpensesRoute
   '/explore': typeof ExploreRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/budgets'
     | '/chat'
     | '/convert'
+    | '/delete-account'
     | '/expenses'
     | '/explore'
     | '/forgot-password'
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/budgets'
     | '/chat'
     | '/convert'
+    | '/delete-account'
     | '/expenses'
     | '/explore'
     | '/forgot-password'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/budgets'
     | '/chat'
     | '/convert'
+    | '/delete-account'
     | '/expenses'
     | '/explore'
     | '/forgot-password'
@@ -273,6 +285,7 @@ export interface RootRouteChildren {
   BudgetsRoute: typeof BudgetsRoute
   ChatRoute: typeof ChatRoute
   ConvertRoute: typeof ConvertRoute
+  DeleteAccountRoute: typeof DeleteAccountRoute
   ExpensesRoute: typeof ExpensesRoute
   ExploreRoute: typeof ExploreRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -325,6 +338,13 @@ declare module '@tanstack/react-router' {
       path: '/convert'
       fullPath: '/convert'
       preLoaderRoute: typeof ConvertRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/delete-account': {
+      id: '/delete-account'
+      path: '/delete-account'
+      fullPath: '/delete-account'
+      preLoaderRoute: typeof DeleteAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/expenses': {
@@ -441,6 +461,7 @@ const rootRouteChildren: RootRouteChildren = {
   BudgetsRoute: BudgetsRoute,
   ChatRoute: ChatRoute,
   ConvertRoute: ConvertRoute,
+  DeleteAccountRoute: DeleteAccountRoute,
   ExpensesRoute: ExpensesRoute,
   ExploreRoute: ExploreRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,

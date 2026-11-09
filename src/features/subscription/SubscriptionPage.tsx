@@ -2,22 +2,16 @@ import { LegalLinks } from "@/features/legal/LegalPage";
 import { ErrorText } from "@/components/ErrorText";
 // pages/SubscriptionPage.tsx
 import { useEffect, useState } from "react";
-import { Check, Clock, Loader2 } from "lucide-react";
+import { Check, Coins, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
-import { interpolate } from "@/lib/i18n";
 import { isRtlLanguage } from "@/lib/rtl";
-import { getEffectiveSubscriptionStatus, getSubscriptionDisplay } from "@/lib/subscription";
-import subscriptionStrings from "@/locales/en/subscription.json";
-import subscriptionStatusStrings from "@/locales/en/subscriptionStatus.json";
 import { fetchPlans, checkoutPlan, verifyPayment } from "@/features/subscription/subscriptionSlice";
 import { fetchProfile } from "@/features/account/accountSlice";
 
 export function SubscriptionPage() {
   const dispatch = useAppDispatch();
-  const t = useTranslations("subscription", subscriptionStrings);
-  const statusT = useTranslations("subscriptionStatus", subscriptionStatusStrings);
 
   const { plans, plansLoaded, checkingOut, error } = useAppSelector((s) => s.subscription);
   const profile = useAppSelector((s) => s.account.profile);
@@ -29,27 +23,8 @@ export function SubscriptionPage() {
     dispatch(fetchPlans());
   }, [dispatch]);
 
-  const { statusLabel, hint } = getSubscriptionDisplay(profile, statusT, interpolate);
-  const effectiveStatus = getEffectiveSubscriptionStatus(profile);
-  const pageTitle = effectiveStatus === "active"
-    ? t.activeTitle
-    : effectiveStatus === "trial"
-      ? t.trialTitle
-      : effectiveStatus === "cancelled"
-        ? t.cancelledTitle
-        : t.expiredTitle;
-  const pageSubtitle = effectiveStatus === "active"
-    ? t.activeSubtitle
-    : effectiveStatus === "trial"
-      ? t.trialSubtitle
-      : effectiveStatus === "cancelled"
-        ? t.cancelledSubtitle
-        : t.expiredSubtitle;
-  const subscribeLabel = effectiveStatus === "active"
-    ? t.extend
-    : effectiveStatus === "cancelled"
-      ? t.renew
-      : t.subscribe;
+  const pageTitle = "Token deals & wallet recharge";
+  const pageSubtitle = "Buy tokens once and spend them only when you use an AI feature.";
 
   async function handleSubscribe(planId: string) {
     setPopupError(null);
@@ -65,22 +40,22 @@ export function SubscriptionPage() {
     );
 
     if (!checkoutWindow) {
-      setPopupError(t.popupBlocked);
+      setPopupError("Your browser blocked the checkout window. Please allow pop-ups and try again.");
       return;
     }
 
-    checkoutWindow.document.title = t.checkoutWindowTitle;
+    checkoutWindow.document.title = "Token checkout";
 
     try {
       const { paymentId, checkoutUrl } = await dispatch(checkoutPlan(planId)).unwrap();
       const url = new URL(checkoutUrl);
 
       if (url.protocol !== "https:" && url.protocol !== "http:") {
-        throw new Error(t.invalidCheckoutUrl);
+        throw new Error("The payment provider returned an invalid checkout URL.");
       }
 
       if (checkoutWindow.closed) {
-        setPopupError(t.checkoutWindowClosed);
+        setPopupError("The checkout window was closed before payment could begin.");
         return;
       }
 
@@ -108,7 +83,7 @@ export function SubscriptionPage() {
           }
           if (payment.status === "failed") {
             window.clearInterval(reconcile);
-            setPopupError(t.checkoutFailed);
+            setPopupError("Payment could not be completed. Please try again.");
             return;
           }
         } catch (error) {
@@ -124,7 +99,7 @@ export function SubscriptionPage() {
     } catch (checkoutError) {
       checkoutWindow.close();
       setPopupError(
-        checkoutError instanceof Error ? checkoutError.message : t.checkoutFailed,
+        checkoutError instanceof Error ? checkoutError.message : "Payment could not be completed. Please try again.",
       );
     }
   }
@@ -138,14 +113,13 @@ export function SubscriptionPage() {
       <LegalLinks />
       <div className="text-center">
         <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-accent text-accent-foreground">
-          <Clock className="h-6 w-6" />
+          <Coins className="h-6 w-6" />
         </span>
         <h1 className="mt-4 font-display text-2xl font-bold">{pageTitle}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{pageSubtitle}</p>
 
         <div className="mx-auto mt-4 inline-flex items-center gap-2 rounded-full bg-muted px-4 py-1.5 text-sm">
-          <span className="font-semibold">{statusLabel}</span>
-          {hint && <span className="text-muted-foreground">· {hint}</span>}
+          <span className="font-semibold">{profile?.tokenBalance ?? 0} tokens available</span>
         </div>
       </div>
 
@@ -165,9 +139,10 @@ export function SubscriptionPage() {
             <p className="mt-3 text-2xl font-extrabold">
               {plan.price.toFixed(2)}
               <span className="ms-1 text-sm font-medium text-muted-foreground">
-                {plan.currency.code} / {plan.durationMonths}mo
+                {plan.currency.code}
               </span>
             </p>
+            <p className="mt-1 text-sm font-semibold text-primary">{plan.tokenCount} tokens</p>
             <Button
               className="mt-4 w-full rounded-xl"
               onClick={() => handleSubscribe(plan.id)}
@@ -176,12 +151,12 @@ export function SubscriptionPage() {
               {checkingOut === plan.id ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {t.redirecting}
+                  Redirecting…
                 </>
               ) : (
                 <>
                   <Check className="h-4 w-4" />
-                  {subscribeLabel}
+                  Buy tokens
                 </>
               )}
             </Button>

@@ -40,6 +40,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     pathname === "/signup" ||
     pathname === "/forgot-password" ||
     pathname === "/onboarding" ||
+    pathname === "/delete-account" ||
     pathname === "/terms" ||
     pathname === "/privacy";
 

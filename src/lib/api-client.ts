@@ -306,6 +306,9 @@ export async function apiFetch<T>(
   assertSession(session.generation);
 
   if (!response.ok) {
+    if (response.status === 402 && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("smarttravel:tokens-insufficient", { detail: payload }));
+    }
     throw new ApiError(getErrorMessage(payload, response.status), response.status, payload);
   }
 

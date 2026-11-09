@@ -1,9 +1,8 @@
 // components/SubscriptionGate.tsx
 import { useEffect } from "react";
-import { Navigate, useLocation } from "@tanstack/react-router";
+import { useLocation } from "@tanstack/react-router";
 
 import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
-import { hasActiveAccess } from "@/lib/subscription";
 import { fetchProfile } from "@/features/account/accountSlice";
 import { PageLoading } from "@/components/Loading";
 import appShellStrings from "@/locales/en/app-shell.json";
@@ -21,7 +20,6 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const isAuthExempt = AUTH_EXEMPT_PATHS.some((p) =>
     location.pathname.startsWith(p),
   );
-  const isSubscribePage = location.pathname.startsWith("/subscribe");
   const t = useTranslations("app-shell", appShellStrings);
 
   // This gate sits above the whole route tree, so it can't assume
@@ -47,9 +45,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
     return <PageLoading label={t.loadingAccount} description={t.checkingAccess} />;
   }
 
-  if (!isSubscribePage && !hasActiveAccess(profile)) {
-    return <Navigate to="/subscribe" />;
-  }
-
+  // Access is now governed per AI request by the server-side token wallet.
+  // Keep normal non-AI features usable even when a wallet is empty.
   return <>{children}</>;
 }

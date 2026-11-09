@@ -5,15 +5,15 @@ import { SubscriptionPage } from "@/features/subscription/SubscriptionPage";
 export const Route = createFileRoute("/subscribe")({
   head: () => ({
     meta: [
-      { title: "Subscribe · SmartTravel" },
+      { title: "AI Tokens · SmartTravel" },
       {
         name: "description",
-        content: "Subscribe to SmartTravel and get the most out of your travel experience.",
+        content: "Buy tokens for SmartTravel AI services.",
       },
-      { property: "og:title", content: "Subscribe · SmartTravel" },
+      { property: "og:title", content: "AI Tokens · SmartTravel" },
       {
         property: "og:description",
-        content: "Subscribe to SmartTravel and get the most out of your travel experience.",
+        content: "Buy tokens for SmartTravel AI services.",
       },
     ],
   }),

@@ -19,7 +19,8 @@ import { PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAppSelector, useTranslations } from "@/app/hooks";
+import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
+import { fetchProfile } from "@/features/account/accountSlice";
 import { API_BASE_URL, apiFetch, type ApiResponse } from "@/lib/api-client";
 import { isRtlLanguage } from "@/lib/rtl";
 import strings from "@/locales/en/interpreter.json";
@@ -32,6 +33,7 @@ const FALLBACK_LANGUAGES: Language[] = [
 ];
 
 export function InterpreterPage() {
+  const dispatch = useAppDispatch();
   const t = useTranslations("interpreter", strings);
   const profile = useAppSelector((state) => state.account.profile);
   const isGuest = useAppSelector((state) => state.auth.isGuest);
@@ -164,6 +166,7 @@ export function InterpreterPage() {
         isGuest ? "/guest/interpreter/turn" : `/interpreter/conversations/${active.id}/turns`,
         { method: "POST", body: form },
       );
+      if (!isGuest) void dispatch(fetchProfile());
       setConversation((current) => current
         ? { ...current, turns: [...(current.turns ?? []), response.data] }
         : current);

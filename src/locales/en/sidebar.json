@@ -13,8 +13,12 @@
   "account": "Account",
   "notifications": "Notifications",
   "myAccount": "Account",
+  "tokenDeals": "Token deals",
   "settings": "Settings",
   "needAHand": "Need any help ?",
   "supportBlurb": "Our support team replies in under 5 minutes.",
-  "helpCenter": "Help center"
+  "helpCenter": "Help center",
+  "guestMode": "Guest mode",
+  "guestSignInHint": "Sign in to save your activity and unlock every feature.",
+  "signInToUnlock": "Sign in to unlock all features"
 }

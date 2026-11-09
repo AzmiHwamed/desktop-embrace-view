@@ -13,6 +13,7 @@ import {
   LifeBuoy,
   Languages,
   WalletCards,
+  Coins,
   Compass,
 } from "lucide-react";
 
@@ -60,6 +61,7 @@ export function AppSidebar() {
   ].filter((item) => !isGuest || ["scan", "convert", "interpreter", "explore"].includes(item.key));
 
   const accountItems = [
+    { key: "token-deals", title: t.tokenDeals, url: "/subscribe", icon: Coins },
     { key: "notifications", title: t.notifications, url: "/notifications", icon: Bell },
     { key: "account", title: t.myAccount, url: "/account", icon: UserRound },
     { key: "settings", title: t.settings, url: "/settings", icon: Settings },
@@ -138,15 +140,15 @@ export function AppSidebar() {
             ) : (
               <LifeBuoy className="h-5 w-5 opacity-80" />
             )}
-            <p className="mt-2 text-sm font-semibold">{isGuest ? "Guest mode" : t.needAHand}</p>
+            <p className="mt-2 text-sm font-semibold">{isGuest ? t.guestMode : t.needAHand}</p>
             <p className="mt-1 text-xs opacity-70">
-              {isGuest ? "Sign in to save your activity and unlock every feature." : t.supportBlurb}
+              {isGuest ? t.guestSignInHint : t.supportBlurb}
             </p>
             <Link
               to={isGuest ? "/login" : "/settings"}
               className="mt-3 inline-flex rounded-lg bg-sidebar/15 px-3 py-1.5 text-xs font-semibold backdrop-blur"
             >
-              {isGuest ? "Sign in to unlock all features" : t.helpCenter}
+              {isGuest ? t.signInToUnlock : t.helpCenter}
             </Link>
           </div>
         ) : (

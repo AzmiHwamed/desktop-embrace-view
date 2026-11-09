@@ -2,6 +2,7 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import { ApiError, apiFetch, type ApiResponse } from "@/lib/api-client";
+import { fetchProfile } from "@/features/account/accountSlice";
 
 import type {
   ExpenseCategory,
@@ -90,7 +91,7 @@ export type ExtractReceiptInput = {
 
 export const extractReceipt = createAsyncThunk<Receipt, ExtractReceiptInput, { rejectValue: ScanFailure }>(
   "scan/extractReceipt",
-  async ({ file, location }, { rejectWithValue }) => {
+  async ({ file, location }, { dispatch, rejectWithValue }) => {
     try {
       const formData = new FormData();
       formData.append("image", file);
@@ -105,6 +106,8 @@ export const extractReceipt = createAsyncThunk<Receipt, ExtractReceiptInput, { r
         method: "POST",
         body: formData,
       });
+
+      if (!guest) void dispatch(fetchProfile());
 
       return res.data;
     } catch (error) {

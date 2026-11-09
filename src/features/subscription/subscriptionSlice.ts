@@ -1,7 +1,7 @@
 // features/subscription/subscriptionSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-import type { Plan, SubscriptionState } from "./types";
+import type { TokenPackage, SubscriptionState } from "./types";
 import { apiFetch, type ApiResponse } from "@/lib/api-client";
 
 const initialState: SubscriptionState = {
@@ -13,7 +13,7 @@ const initialState: SubscriptionState = {
 };
 
 export const fetchPlans = createAsyncThunk("subscription/fetchPlans", async () => {
-  const res = await apiFetch<ApiResponse<Plan[]>>("/payment-plans");
+  const res = await apiFetch<ApiResponse<TokenPackage[]>>("/payment-plans");
   return res.data;
 });
 

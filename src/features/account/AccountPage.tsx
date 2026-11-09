@@ -1,13 +1,14 @@
 import { ErrorText } from "@/components/ErrorText";
 // pages/AccountPage.tsx
 import { useEffect, useRef, useState } from "react";
-import { LogOut, MapPin, Receipt, CreditCard, Trash2 } from "lucide-react";
+import { Check, ChevronsUpDown, LogOut, MapPin, Receipt, Coins, Trash2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/AppLayout";
 import { StatCard } from "@/components/StatCard";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -31,64 +32,17 @@ import {
 
 import { fetchProfile, saveProfile, fetchReferenceData } from "./accountSlice";
 import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
-import { interpolate } from "@/lib/i18n";
 import { isRtlLanguage } from "@/lib/rtl";
 import accountStrings from "@/locales/en/account.json";
-import type { CountryPreferences, Profile, SubscriptionStatus } from "./types";
+import type { CountryPreferences } from "./types";
 import { fetchTranslation, resetTranslations } from "@/features/i18n/i18nSlice";
 import { storeLanguage } from "@/lib/language-preference";
 import loginStrings from "@/locales/en/login.json";
 import appShellStrings from "@/locales/en/app-shell.json";
 import { apiFetch, type ApiResponse } from "@/lib/api-client";
 import { logout } from "@/features/auth/authSlice";
-
-// Maps status -> which timestamp on the profile is the relevant one to
-// show, and which message key describes it. Trial has no fixed end in the
-// sample data (`trialEndsAt: null`) so it falls back to noEndDate rather
-// than rendering "Trial ends -".
-function getSubscriptionDisplay(
-  profile: Profile | null,
-  t: typeof accountStrings,
-): { statusLabel: string; hint: string } {
-  if (!profile) return { statusLabel: "—", hint: "" };
-
-  const status: SubscriptionStatus = profile.subscriptionStatus;
-  const format = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString() : null);
-
-  switch (status) {
-    case "active": {
-      const date = format(profile.subscriptionEndsAt);
-      return {
-        statusLabel: t.active,
-        hint: date ? interpolate(t.renewsOn, { date }) : t.noEndDate,
-      };
-    }
-    case "trial": {
-      const date = format(profile.trialEndsAt);
-      return {
-        statusLabel: t.trial,
-        hint: date ? interpolate(t.trialEndsOn, { date }) : t.noEndDate,
-      };
-    }
-    case "expired": {
-      const date = format(profile.subscriptionEndsAt);
-      return {
-        statusLabel: t.expired,
-        hint: date ? interpolate(t.expiredOn, { date }) : t.noEndDate,
-      };
-    }
-    case "cancelled":
-    case "canceled": {
-      const date = format(profile.subscriptionEndsAt);
-      return {
-        statusLabel: t.canceled,
-        hint: date ? interpolate(t.accessUntil, { date }) : t.noEndDate,
-      };
-    }
-    default:
-      return { statusLabel: "—", hint: "" };
-  }
-}
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 export function AccountPage() {
   const dispatch = useAppDispatch();
@@ -110,6 +64,7 @@ export function AccountPage() {
   const [displayName, setDisplayName] = useState("");
   const [currencyId, setCurrencyId] = useState("");
   const [currentCountryId, setCurrentCountryId] = useState("");
+  const [countryPickerOpen, setCountryPickerOpen] = useState(false);
   const [languageId, setLanguageId] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -124,6 +79,7 @@ export function AccountPage() {
   // Preview direction as soon as a language is selected, before the profile
   // is saved and fetched again.
   const isRtl = isRtlLanguage(selectedLanguageCode ?? profile?.language?.code);
+  const selectedCountry = countries.find((country) => country.id === currentCountryId);
 
   useEffect(() => {
     dispatch(fetchProfile());
@@ -268,7 +224,6 @@ export function AccountPage() {
       .slice(0, 2)
       .toUpperCase() || "?";
 
-  const { statusLabel, hint: subscriptionHint } = getSubscriptionDisplay(profile, t);
 
   // True until profile and reference data have both settled (fulfilled OR
   // rejected) at least once — mirrors the isPageLoading gate on the other
@@ -330,17 +285,25 @@ export function AccountPage() {
             {t.logOut}
           </Button>
 
-          {/* Subscription status — replaces the old trips card and the
-              plans/checkout section, sourced straight from /users/me. */}
+          {/* Token wallet is sourced from /users/me and is authoritative on the server. */}
           <div className="mt-5 rounded-xl border border-border p-4 text-start">
             <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+              <Coins className="h-4 w-4 text-muted-foreground" />
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t.subscription}
+                AI token wallet
               </span>
             </div>
-            <p className="mt-2 text-sm font-bold">{statusLabel}</p>
-            <p className="text-xs text-muted-foreground">{subscriptionHint}</p>
+            <p className="mt-2 text-2xl font-bold">{profile?.tokenBalance ?? 0} tokens</p>
+            <p className="text-xs text-muted-foreground">Tokens are used when you run an AI service.</p>
+            <Button
+              type="button"
+              size="sm"
+              className="mt-3 w-full rounded-lg"
+              onClick={() => navigate({ to: "/subscribe" })}
+            >
+              <Coins className="h-4 w-4" />
+              View token deals & charge wallet
+            </Button>
           </div>
         </div>
 
@@ -375,24 +338,49 @@ export function AccountPage() {
 
             <div className="space-y-2">
               <Label htmlFor="country">{t.country}</Label>
-              <Select
-                dir={isRtl ? "rtl" : "ltr"}
-                value={currentCountryId}
-                onValueChange={handleCountryChange}
-                disabled={referenceLoading}
-              >
-                <SelectTrigger id="country" className="h-11 rounded-xl">
-                  <SelectValue placeholder={t.selectCountry} />
-                </SelectTrigger>
-                <SelectContent dir={isRtl ? "rtl" : "ltr"}>
-                  {countries.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.flag ? `${c.flag} ` : ""}
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={countryPickerOpen} onOpenChange={setCountryPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="country"
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={countryPickerOpen}
+                    disabled={referenceLoading}
+                    className="h-11 w-full justify-between rounded-xl px-3 font-normal"
+                  >
+                    <span className="truncate">
+                      {selectedCountry ? `${selectedCountry.flag ? `${selectedCountry.flag} ` : ""}${selectedCountry.name}` : t.selectCountry}
+                    </span>
+                    <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search country or code…" />
+                    <CommandList>
+                      <CommandEmpty>No countries found.</CommandEmpty>
+                      <CommandGroup>
+                        {countries.map((country) => (
+                          <CommandItem
+                            key={country.id}
+                            value={`${country.name} ${country.alpha2Code} ${country.alpha3Code}`}
+                            onSelect={() => {
+                              handleCountryChange(country.id);
+                              setCountryPickerOpen(false);
+                            }}
+                          >
+                            <span className="w-7 text-base">{country.flag ?? "🌐"}</span>
+                            <span className="min-w-0 flex-1 truncate">{country.name}</span>
+                            <span className="text-xs text-muted-foreground">{country.alpha2Code}</span>
+                            <Check className={cn("h-4 w-4", currentCountryId === country.id ? "opacity-100" : "opacity-0")} />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
@@ -481,11 +469,10 @@ export function AccountPage() {
                 }
               }}
             >
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="mt-4 rounded-xl">
+
+                <Button onClick={() => { navigate({ to: "/delete-account" }); }} variant="destructive" className="mt-4 rounded-xl">
                   <Trash2 className="h-4 w-4" /> Delete my account
                 </Button>
-              </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete your account permanently?</AlertDialogTitle>

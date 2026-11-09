@@ -13,6 +13,8 @@ export type Profile = {
   subscriptionStatus: SubscriptionStatus;
   trialEndsAt: string | null;
   subscriptionEndsAt: string | null;
+  /** Spendable AI-service tokens. Every newly registered account starts at 30. */
+  tokenBalance: number;
 };
 
 export type Currency = {

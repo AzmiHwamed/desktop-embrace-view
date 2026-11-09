@@ -13,6 +13,13 @@ export function usePostAuthRedirect() {
 
   useEffect(() => {
     if (status !== "authenticated" || !user) return;
+    const redirect = new URLSearchParams(window.location.search).get("redirect");
+    // Permit only internal, absolute paths. This preserves the return trip
+    // from the public deletion page without introducing an open redirect.
+    if (redirect?.startsWith("/") && !redirect.startsWith("//")) {
+      window.location.replace(redirect);
+      return;
+    }
     if (isProfileComplete(user)) {
       navigate({ to: "/", replace: true });
     } else {

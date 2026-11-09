@@ -1,6 +1,6 @@
 // components/TopNav.tsx
 import { Link } from "@tanstack/react-router";
-import { Bell, LogOut, Plus, Search, ScanLine, Clock } from "lucide-react";
+import { Bell, LogOut, Plus, Search, ScanLine, Coins } from "lucide-react";
 
 import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -10,15 +10,11 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { logout } from "@/features/auth/authSlice";
 import { useEffect } from "react";
 import { fetchProfile } from "@/features/account/accountSlice";
-import { interpolate } from "@/lib/i18n";
 import { isRtlLanguage } from "@/lib/rtl";
-import { getEffectiveSubscriptionStatus, getSubscriptionDisplay } from "@/lib/subscription";
-import subscriptionStatusStrings from "@/locales/en/subscriptionStatus.json";
 import topNavStrings from "@/locales/en/topnav.json";
 
 export function TopNav({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
   const dispatch = useAppDispatch();
-  const statusT = useTranslations("subscriptionStatus", subscriptionStatusStrings);
   const t = useTranslations("topnav", topNavStrings);
   const isGuest = useAppSelector((s) => s.auth.isGuest);
 
@@ -38,8 +34,6 @@ export function TopNav({ isAuthenticated = false }: { isAuthenticated?: boolean 
     window.location.replace("/login");
   };
 
-  const { statusLabel, hint } = getSubscriptionDisplay(profile, statusT, interpolate);
-  const effectiveStatus = getEffectiveSubscriptionStatus(profile);
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur">
@@ -61,18 +55,13 @@ export function TopNav({ isAuthenticated = false }: { isAuthenticated?: boolean 
               to="/subscribe"
               className={
                 "hidden items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-semibold sm:flex " +
-                (effectiveStatus === "expired"
-                  ? "border-destructive/30 bg-destructive/10 text-destructive"
-                  : effectiveStatus === "cancelled"
-                    ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-                  : "border-border bg-muted/60 text-muted-foreground")
+                "border-border bg-muted/60 text-muted-foreground"
               }
-              title={hint}
+              title="AI tokens available"
             >
-              <Clock className="h-3.5 w-3.5 shrink-0" />
+              <Coins className="h-3.5 w-3.5 shrink-0" />
               <span className="whitespace-nowrap">
-                {statusLabel}
-                {hint && <span className="hidden font-normal lg:inline"> · {hint}</span>}
+                {profile.tokenBalance ?? 0} tokens
               </span>
             </Link>
           )}
