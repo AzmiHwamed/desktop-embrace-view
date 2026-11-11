@@ -1,4 +1,5 @@
-// components/SubscriptionGate.tsx
+// Token balance is enforced for each AI request by the server. This component
+// only makes sure the authenticated profile is available to the app shell.
 import { useEffect } from "react";
 import { useLocation } from "@tanstack/react-router";
 
@@ -7,12 +8,10 @@ import { fetchProfile } from "@/features/account/accountSlice";
 import { PageLoading } from "@/components/Loading";
 import appShellStrings from "@/locales/en/app-shell.json";
 
-// Routes exempt from the paywall — /subscribe itself (or the redirect
-// loops forever). Add auth-adjacent routes (login, verify-email, etc.) if
-// you have any — I don't know your route list, so this is a starting point.
+// Auth-adjacent routes must render without loading a protected profile.
 const AUTH_EXEMPT_PATHS = ["/login", "/signup", "/forgot-password", "/onboarding", "/terms", "/privacy"];
 
-export function SubscriptionGate({ children }: { children: React.ReactNode }) {
+export function ProfileGate({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const { profile, profileLoaded } = useAppSelector((s) => s.account);
@@ -22,7 +21,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   );
   const t = useTranslations("app-shell", appShellStrings);
 
-  // This gate sits above the whole route tree, so it can't assume
+  // This profile loader sits above the whole route tree, so it can't assume
   // AccountPage has mounted and already triggered the fetch — it needs its
   // own trigger, guarded so it only fires once.
   useEffect(() => {
@@ -38,14 +37,13 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // Don't decide anything until the profile has actually settled — avoids
-  // a flash of "redirecting" for a split second on every load before the
-  // fetch resolves.
+  // Wait for the account fetch so shared token-balance UI does not flash a
+  // stale value during app startup.
   if (!profileLoaded) {
     return <PageLoading label={t.loadingAccount} description={t.checkingAccess} />;
   }
 
-  // Access is now governed per AI request by the server-side token wallet.
-  // Keep normal non-AI features usable even when a wallet is empty.
+  // Normal app access never expires; AI requests are authorized by the
+  // server-side token wallet.
   return <>{children}</>;
 }

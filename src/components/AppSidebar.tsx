@@ -61,7 +61,7 @@ export function AppSidebar() {
   ].filter((item) => !isGuest || ["scan", "convert", "interpreter", "explore"].includes(item.key));
 
   const accountItems = [
-    { key: "token-deals", title: t.tokenDeals, url: "/subscribe", icon: Coins },
+    { key: "token-deals", title: t.tokenDeals, url: "/tokens", icon: Coins },
     { key: "notifications", title: t.notifications, url: "/notifications", icon: Bell },
     { key: "account", title: t.myAccount, url: "/account", icon: UserRound },
     { key: "settings", title: t.settings, url: "/settings", icon: Settings },

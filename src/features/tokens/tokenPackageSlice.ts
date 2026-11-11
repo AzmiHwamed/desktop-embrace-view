@@ -1,10 +1,9 @@
-// features/subscription/subscriptionSlice.ts
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-import type { TokenPackage, SubscriptionState } from "./types";
+import type { TokenPackage, TokenPackageState } from "./types";
 import { apiFetch, type ApiResponse } from "@/lib/api-client";
 
-const initialState: SubscriptionState = {
+const initialState: TokenPackageState = {
   plans: [],
   plansLoaded: false,
   loading: false,
@@ -12,13 +11,13 @@ const initialState: SubscriptionState = {
   error: null,
 };
 
-export const fetchPlans = createAsyncThunk("subscription/fetchPlans", async () => {
+export const fetchTokenPackages = createAsyncThunk("tokens/fetchPackages", async () => {
   const res = await apiFetch<ApiResponse<TokenPackage[]>>("/payment-plans");
   return res.data;
 });
 
-export const checkoutPlan = createAsyncThunk(
-  "subscription/checkoutPlan",
+export const checkoutTokenPackage = createAsyncThunk(
+  "tokens/checkoutPackage",
   async (planId: string) => {
     const res = await apiFetch<ApiResponse<{ paymentId: string; checkoutUrl: string }>>(
       `/payment/checkout/${planId}`,
@@ -28,8 +27,8 @@ export const checkoutPlan = createAsyncThunk(
   },
 );
 
-export const verifyPayment = createAsyncThunk(
-  "subscription/verifyPayment",
+export const verifyTokenPayment = createAsyncThunk(
+  "tokens/verifyPayment",
   async (paymentId: string) => {
     const res = await apiFetch<ApiResponse<{ status: "pending" | "succeeded" | "failed" }>>(
       `/payment/${paymentId}/verify`,
@@ -39,38 +38,38 @@ export const verifyPayment = createAsyncThunk(
   },
 );
 
-const subscriptionSlice = createSlice({
-  name: "subscription",
+const tokenPackageSlice = createSlice({
+  name: "tokens",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchPlans.pending, (state) => {
+      .addCase(fetchTokenPackages.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchPlans.fulfilled, (state, action) => {
+      .addCase(fetchTokenPackages.fulfilled, (state, action) => {
         state.loading = false;
         state.plansLoaded = true;
         state.plans = action.payload;
       })
-      .addCase(fetchPlans.rejected, (state, action) => {
+      .addCase(fetchTokenPackages.rejected, (state, action) => {
         state.loading = false;
         state.plansLoaded = true;
         state.error = action.error.message ?? "Failed to load plans";
       })
-      .addCase(checkoutPlan.pending, (state, action) => {
+      .addCase(checkoutTokenPackage.pending, (state, action) => {
         state.checkingOut = action.meta.arg;
         state.error = null;
       })
-      .addCase(checkoutPlan.fulfilled, (state) => {
+      .addCase(checkoutTokenPackage.fulfilled, (state) => {
         state.checkingOut = null;
       })
-      .addCase(checkoutPlan.rejected, (state, action) => {
+      .addCase(checkoutTokenPackage.rejected, (state, action) => {
         state.checkingOut = null;
         state.error = action.error.message ?? "Failed to start checkout";
       });
   },
 });
 
-export default subscriptionSlice.reducer;
+export default tokenPackageSlice.reducer;

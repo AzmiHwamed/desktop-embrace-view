@@ -24,7 +24,7 @@ export function TokenPurchaseDialog() {
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Not now</Button>
-          <Button asChild onClick={() => setOpen(false)}><Link to="/subscribe">Get tokens</Link></Button>
+          <Button asChild onClick={() => setOpen(false)}><Link to="/tokens">Get tokens</Link></Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

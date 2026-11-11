@@ -7,9 +7,10 @@ import type { BudgetPlan } from "./types";
 const translationCache = new Map<string, Record<string, string>>();
 
 export function useTranslatedBudgetNames(plans: BudgetPlan[]): Record<string, string> {
-  const languageKey = useAppSelector(
-    (state) => state.account.profile?.languageId ?? state.account.profile?.language?.code ?? "default",
-  );
+  const { languageKey, targetLanguage } = useAppSelector((state) => ({
+    languageKey: state.account.profile?.languageId ?? state.account.profile?.language?.code ?? "default",
+    targetLanguage: state.account.profile?.language?.name,
+  }));
   const sourceKey = useMemo(
     () => plans.map((plan) => `${plan.id}:${plan.name}`).sort().join("|"),
     [plans],
@@ -34,7 +35,7 @@ export function useTranslatedBudgetNames(plans: BudgetPlan[]): Record<string, st
     const source = Object.fromEntries(plans.map((plan) => [plan.id, plan.name]));
     apiFetch<ApiResponse<{ data: Record<string, string> }>>("/translation/json", {
       method: "POST",
-      body: JSON.stringify({ data: source }),
+      body: JSON.stringify({ data: source, target: targetLanguage }),
     })
       .then((response) => {
         if (cancelled) return;
@@ -47,7 +48,7 @@ export function useTranslatedBudgetNames(plans: BudgetPlan[]): Record<string, st
       });
 
     return () => { cancelled = true; };
-  }, [cacheKey, languageKey, sourceKey]);
+  }, [cacheKey, languageKey, sourceKey, targetLanguage]);
 
   return translated;
 }

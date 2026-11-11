@@ -1,5 +1,10 @@
 {
-  "searchPlaceholder": "Search receipts, currencies, trips…",
+  "searchPlaceholder": "Search receipts, places, trips…",
+  "searching": "Searching…",
+  "noSearchResults": "No matching receipts, places, or trips.",
+  "receipts": "Receipts",
+  "places": "Places",
+  "trips": "Trips",
   "scanReceipt": "Scan receipt",
   "newScan": "New scan operation",
   "notifications": "Notifications",

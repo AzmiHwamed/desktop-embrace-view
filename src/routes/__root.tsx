@@ -17,7 +17,7 @@ import { makeStore, type AppStore } from "../app/store";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppLayout } from "../components/AppLayout";
-import { SubscriptionGate } from "../components/SubscriptionGate";
+import { ProfileGate } from "../components/ProfileGate";
 import { TokenPurchaseDialog } from "@/components/TokenPurchaseDialog";
 import { useAppSelector, useAppDispatch } from "@/app/hooks";
 import { logout } from "@/features/auth/authSlice";
@@ -182,7 +182,7 @@ function SessionContent({ queryClient }: { queryClient: QueryClient }) {
   return (
     <div key={generation} className="contents">
       <AppLayout>
-        <SubscriptionGate><Outlet /></SubscriptionGate>
+        <ProfileGate><Outlet /></ProfileGate>
       </AppLayout>
       <Toaster />
       <TokenPurchaseDialog />

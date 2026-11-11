@@ -35,7 +35,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     setSessionChecked(true);
   }, [dispatch]);
 
-  const isStandalonePublicPage =
+  const isPublicPage =
     pathname === "/login" ||
     pathname === "/signup" ||
     pathname === "/forgot-password" ||
@@ -43,17 +43,18 @@ export function AppLayout({ children }: { children: ReactNode }) {
     pathname === "/delete-account" ||
     pathname === "/terms" ||
     pathname === "/privacy";
+  const isStandalonePage = isPublicPage || pathname === "/payment-result";
 
   const guestAllowedPaths = ["/scan", "/convert", "/interpreter", "/explore"];
   const isGuestAllowedPage = guestAllowedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
   useEffect(() => {
-    if (sessionChecked && !isAuthenticated && !isStandalonePublicPage) {
+    if (sessionChecked && !isAuthenticated && !isPublicPage) {
       navigate({ to: "/login", replace: true });
-    } else if (sessionChecked && isGuest && !isStandalonePublicPage && !isGuestAllowedPage) {
+    } else if (sessionChecked && isGuest && !isPublicPage && !isGuestAllowedPage) {
       navigate({ to: "/login", replace: true });
     }
-  }, [sessionChecked, isAuthenticated, isGuest, isGuestAllowedPage, isStandalonePublicPage, navigate]);
+  }, [sessionChecked, isAuthenticated, isGuest, isGuestAllowedPage, isPublicPage, navigate]);
 
   useEffect(() => {
     if (isAuthenticated && !isGuest && profile && !budgetsHydrated) dispatch(hydrateBudgets());
@@ -64,7 +65,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     dispatch(fetchBudgetExpenses(activeBudget)).then(() => dispatch(evaluateBudgetReminders()));
   }, [dispatch, activeBudget]);
 
-  if (isStandalonePublicPage) {
+  if (isPublicPage) {
     return <>{children}</>;
   }
 
@@ -84,7 +85,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   // Checkout is a focused, standalone flow. Keep authentication/session
   // handling active, but omit the normal application sidebar and top bar.
-  if (pathname.startsWith("/subscribe")) {
+  if (isStandalonePage || pathname.startsWith("/tokens")) {
     return <div className="min-h-screen bg-background">{children}</div>;
   }
 

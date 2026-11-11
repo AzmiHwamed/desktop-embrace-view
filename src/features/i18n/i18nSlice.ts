@@ -22,6 +22,7 @@ export const fetchTranslation = createAsyncThunk(
     namespace: string;
     source: TranslationDictionary;
     languageCacheKey: string;
+    targetLanguage?: string;
   }) => {
     // Backend resolves the target language itself from the authenticated
     // user (user.language.name), so no `target` is sent here. `data` keeps
@@ -30,7 +31,7 @@ export const fetchTranslation = createAsyncThunk(
     const res = await apiFetch<ApiResponse<TranslationDictionary>>("/translation/json", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ data: params.source }),
+      body: JSON.stringify({ data: params.source, target: params.targetLanguage }),
     });
 
     const translated = res.data.data;

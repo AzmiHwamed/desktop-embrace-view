@@ -299,7 +299,7 @@ export function AccountPage() {
               type="button"
               size="sm"
               className="mt-3 w-full rounded-lg"
-              onClick={() => navigate({ to: "/subscribe" })}
+              onClick={() => navigate({ to: "/tokens" })}
             >
               <Coins className="h-4 w-4" />
               View token deals & charge wallet

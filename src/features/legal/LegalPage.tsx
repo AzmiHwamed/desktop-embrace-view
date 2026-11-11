@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, FileText, ShieldCheck, Plane } from "lucide-react";
 import { legalDetails, legalDocuments } from "./legal-content";
+import { useTranslatedData } from "@/app/hooks";
 
 export function LegalLinks() {
   return (
@@ -27,7 +28,8 @@ export function LegalLinks() {
 }
 
 export function LegalPage({ document }: { document: keyof typeof legalDocuments }) {
-  const content = legalDocuments[document];
+  const documents = useTranslatedData("legal", legalDocuments);
+  const content = documents[document];
   const Icon = document === "privacy" ? ShieldCheck : FileText;
   return (
     <div className="min-h-screen bg-background text-foreground" lang="en" dir="ltr">

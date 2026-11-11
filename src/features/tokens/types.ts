@@ -1,4 +1,3 @@
-// features/subscription/types.ts
 export type TokenPackage = {
   id: string;
   name: string;
@@ -9,7 +8,7 @@ export type TokenPackage = {
   isActive: boolean;
 };
 
-export type SubscriptionState = {
+export type TokenPackageState = {
   plans: TokenPackage[];
   plansLoaded: boolean;
   loading: boolean;

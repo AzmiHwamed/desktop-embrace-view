@@ -1,6 +1,4 @@
 // store/account/types.ts
-export type SubscriptionStatus = "active" | "trial" | "expired" | "cancelled" | "canceled";
-
 export type Profile = {
   id: string;
   displayName: string;
@@ -10,10 +8,7 @@ export type Profile = {
   currentCountryId: string;
   languageId: string;
   language?: Language;
-  subscriptionStatus: SubscriptionStatus;
-  trialEndsAt: string | null;
-  subscriptionEndsAt: string | null;
-  /** Spendable AI-service tokens. Every newly registered account starts at 30. */
+  /** Spendable AI-service tokens. The server is the source of truth. */
   tokenBalance: number;
 };
 

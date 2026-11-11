@@ -21,7 +21,7 @@ import settingsReducer from "@/features/settings/settingsSlice";
 import faqReducer from "@/features/settings/faqSlice";
 import chatReducer from "@/features/chat/chatSlice";
 import i18nReducer from "@/features/i18n/i18nSlice";
-import subscriptionReducer from "@/features/subscription/subscriptionSlice";
+import tokenPackageReducer from "@/features/tokens/tokenPackageSlice";
 import budgetsReducer from "@/features/budgets/budgetSlice";
 
 const reducers = combineReducers({
@@ -37,7 +37,7 @@ const reducers = combineReducers({
   faq: faqReducer,
   chat: chatReducer,
   i18n: i18nReducer,
-  subscription: subscriptionReducer,
+  tokens: tokenPackageReducer,
   budgets: budgetsReducer,
 });
 

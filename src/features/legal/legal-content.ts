@@ -49,10 +49,10 @@ export const legalDocuments = {
       },
       {
         id: "payments",
-        title: "Subscriptions and payments",
+        title: "Token purchases and payments",
         paragraphs: [
-          "Some features require a paid plan. The price, currency, access period, and any renewal conditions should be shown before you confirm a purchase. The terms displayed at checkout apply to that purchase, subject to your mandatory consumer rights.",
-          "Payments are completed through the payment provider shown at checkout. For billing questions, cancellation, or refund requests, contact support. Deleting your account does not by itself establish that a recurring payment arrangement has been cancelled; check the purchase terms and contact support when needed.",
+          "AI features use tokens purchased in one-off packages. The package price, currency, and token amount are shown before you confirm a purchase. The terms displayed at checkout apply to that purchase, subject to your mandatory consumer rights.",
+          "Payments are completed through the payment provider shown at checkout. For billing questions or refund requests, contact support. Token purchases do not create a recurring payment arrangement.",
         ],
       },
       {
@@ -105,9 +105,9 @@ export const legalDocuments = {
         id: "information",
         title: "Information you provide",
         paragraphs: [
-          "Account information includes your email, display name, sign-in provider, optional profile image, preferred language, currency, country, and subscription status. Authentication credentials are handled through the sign-in flow and its authentication provider.",
+          "Account information includes your email, display name, sign-in provider, optional profile image, preferred language, currency, country, and token balance. Authentication credentials are handled through the sign-in flow and its authentication provider.",
           "Feature content may include receipt images and extracted purchase details; expense amounts, merchants, categories, and dates; trip destinations, schedules, budgets, and preferences; voice recordings and interpretation results; and messages you send to customer support.",
-          "Billing records may include your selected plan, payment reference, amount, and payment status. Payment information entered on the external checkout page is handled by the payment provider under its own privacy policy.",
+          "Payment records may include your selected token package, payment reference, amount, and payment status. Payment information entered on the external checkout page is handled by the payment provider under its own privacy policy.",
         ],
       },
       {
@@ -122,7 +122,7 @@ export const legalDocuments = {
         id: "purposes",
         title: "How information is used",
         paragraphs: [
-          "Information is used to authenticate users, maintain accounts, deliver requested features, keep expense and trip records, process subscription access, respond to support requests, and operate and troubleshoot the service.",
+          "Information is used to authenticate users, maintain accounts, deliver requested features, keep expense and trip records, process token purchases, respond to support requests, and operate and troubleshoot the service.",
           "Text, images, or audio submitted to AI-enabled features are processed to produce extraction, translation, speech, or planning results. Displayed error messages may also be sent for translation into your selected language.",
         ],
       },

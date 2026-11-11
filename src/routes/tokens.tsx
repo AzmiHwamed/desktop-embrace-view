@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { SubscriptionPage } from "@/features/subscription/SubscriptionPage";
+import { TokenPackagesPage } from "@/features/tokens/TokenPackagesPage";
 
-export const Route = createFileRoute("/subscribe")({
+export const Route = createFileRoute("/tokens")({
   head: () => ({
     meta: [
       { title: "AI Tokens · SmartTravel" },
@@ -17,5 +17,5 @@ export const Route = createFileRoute("/subscribe")({
       },
     ],
   }),
-  component: SubscriptionPage,
+  component: TokenPackagesPage,
 });
