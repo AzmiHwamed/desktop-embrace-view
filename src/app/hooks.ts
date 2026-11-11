@@ -1,10 +1,10 @@
 import { useDispatch, useSelector, useStore } from "react-redux";
 
 import type { AppDispatch, AppStore, RootState } from "./store";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchTranslation, restoreTranslation } from "@/features/i18n/i18nSlice";
 import { TranslationDictionary } from "@/features/i18n/types";
-import { getCachedTranslation, getStoredLanguage } from "@/lib/language-preference";
+import { getCachedTranslation, getStoredLanguage, storeCachedTranslation } from "@/lib/language-preference";
 import { normalizePlaceholders } from "@/lib/i18n";
 import { apiFetch, type ApiResponse } from "@/lib/api-client";
 
@@ -22,6 +22,7 @@ export function useHasMounted(): boolean {
 // (replace the return statement inside useTranslations in app/hooks.ts)
 export function useTranslations<T extends TranslationDictionary>(namespace: string, source: T): T {
   const dispatch = useAppDispatch();
+  const requestedRefreshes = useRef(new Set<string>());
   const profile = useAppSelector((s) => s.account.profile);
   const storedLanguage = getStoredLanguage();
   const languageCacheKey = profile?.languageId ?? storedLanguage?.id ?? "default";
@@ -31,30 +32,55 @@ export function useTranslations<T extends TranslationDictionary>(namespace: stri
   const loading = useAppSelector((s) => Boolean(s.i18n.loading[key]));
   // Read persisted JSON during render so startup/auth loaders do not paint in
   // English for one frame before the restoration effect runs.
-  const persistedDict = dict ? null : getCachedTranslation<TranslationDictionary>(key);
+  // Always inspect localStorage, even when Redux already has a dictionary.
+  // Storage can be cleared independently (or a prior app version can leave an
+  // incomplete dictionary), and the in-memory version should repair it.
+  const persistedDict = getCachedTranslation<TranslationDictionary>(key);
   const activeDict = dict ?? persistedDict;
   const hasMissingKeys = Object.keys(source).some((sourceKey) => {
     const value = activeDict?.[sourceKey];
     return typeof value !== "string" || value.length === 0;
   });
+  // Old versions could persist the original English source under a non-English
+  // language ID. A complete cache is not necessarily a translated cache.
+  const isNonEnglish = Boolean(targetLanguage && targetLanguage.toLowerCase() !== "english");
+  const dictionaryIsUntranslated = Boolean(
+    activeDict &&
+      isNonEnglish &&
+      Object.keys(source).every((sourceKey) => activeDict[sourceKey] === source[sourceKey]),
+  );
+  const persistedDictionaryIsIncomplete = Object.keys(source).some((sourceKey) => {
+    const value = persistedDict?.[sourceKey];
+    return typeof value !== "string" || value.length === 0;
+  });
 
   useEffect(() => {
+    // Keep localStorage complete whenever Redux has a usable translation.
+    // This makes an erased or stale local cache self-healing without waiting
+    // for a full page reload or another translation API request.
+    if (dict && (!persistedDict || persistedDictionaryIsIncomplete)) {
+      storeCachedTranslation(key, dict);
+    }
+
+    const needsTranslation = hasMissingKeys || dictionaryIsUntranslated;
+    const refreshKey = `${key}:${targetLanguage ?? "default"}`;
+
     if (!dict) {
       if (persistedDict) {
         dispatch(restoreTranslation({ cacheKey: key, dict: persistedDict }));
-      } else if (profile) {
+      } else if (profile && !requestedRefreshes.current.has(refreshKey)) {
         // Translation requires the authenticated user's language. Logged-out
         // pages use the last cached JSON and otherwise fall back to English.
+        requestedRefreshes.current.add(refreshKey);
         dispatch(fetchTranslation({ namespace, source, languageCacheKey, targetLanguage }));
       }
-    } else if (profile && hasMissingKeys && !loading) {
+    } else if (profile && needsTranslation && !loading && !requestedRefreshes.current.has(refreshKey)) {
       // Locale JSON files grow as features are added. Refresh an older cached
-      // dictionary when it does not contain every current source key so new
-      // sidebar/page labels are translated instead of permanently falling
-      // back to English.
+      // dictionary when it is incomplete or was incorrectly saved in English.
+      requestedRefreshes.current.add(refreshKey);
       dispatch(fetchTranslation({ namespace, source, languageCacheKey, targetLanguage }));
     }
-  }, [dispatch, namespace, languageCacheKey, key, dict, persistedDict, source, profile, hasMissingKeys, loading, targetLanguage]);
+  }, [dispatch, namespace, languageCacheKey, key, dict, persistedDict, persistedDictionaryIsIncomplete, source, profile, hasMissingKeys, dictionaryIsUntranslated, loading, targetLanguage]);
 
   // Merge rather than replace: any key missing/undefined/empty in the
   // translated dict falls back to the English source instead of crashing

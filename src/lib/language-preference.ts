@@ -1,7 +1,10 @@
 import { isRtlLanguage } from "@/lib/rtl";
 
 export const LANGUAGE_STORAGE_KEY = "smarttravel.language";
-export const TRANSLATION_STORAGE_PREFIX = "smarttravel.translation.";
+// Bump this whenever cache validity rules change. Older cache entries did not
+// record enough information to guarantee that they were translated for the
+// current user, so they must not be reused.
+export const TRANSLATION_STORAGE_PREFIX = "smarttravel.translation.v2.";
 
 export type StoredLanguage = {
   id: string;

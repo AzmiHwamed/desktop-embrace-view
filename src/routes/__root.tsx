@@ -11,7 +11,7 @@ import {
 import { useEffect, useRef, type ReactNode } from "react";
 import { Provider } from "react-redux";
 import { Toaster } from "@/components/ui/sonner";
-import { applyDocumentLanguage } from "../lib/language-preference";
+import { applyDocumentLanguage, getStoredLanguage, storeLanguage } from "../lib/language-preference";
 
 import { makeStore, type AppStore } from "../app/store";
 import appCss from "../styles.css?url";
@@ -23,6 +23,7 @@ import { useAppSelector, useAppDispatch } from "@/app/hooks";
 import { logout } from "@/features/auth/authSlice";
 import { TOKEN_STORAGE_KEY } from "@/lib/api-client";
 import { getSession } from "@/lib/session-lifecycle";
+import { resetTranslations } from "@/features/i18n/i18nSlice";
 import { toast } from "sonner";
 
 
@@ -163,6 +164,7 @@ function RootComponent() {
 
 function SessionContent({ queryClient }: { queryClient: QueryClient }) {
   const dispatch = useAppDispatch();
+  const profile = useAppSelector((state) => state.account.profile);
   // Every boundary resets auth, triggering this selector and a fresh UI tree.
   useAppSelector((state) => state.auth);
   const generation = getSession().generation;
@@ -179,6 +181,25 @@ function SessionContent({ queryClient }: { queryClient: QueryClient }) {
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, [dispatch]);
+  // The authenticated profile is the single source of truth for language.
+  // Local storage only provides a pre-profile fallback and must never keep an
+  // earlier user's or earlier preference's language active.
+  useEffect(() => {
+    if (!profile?.language) return;
+
+    const current = profile.language;
+    const stored = getStoredLanguage();
+    if (
+      stored?.id === current.id &&
+      stored.code === current.code &&
+      stored.name === current.name
+    ) {
+      return;
+    }
+
+    storeLanguage({ id: current.id, code: current.code, name: current.name });
+    dispatch(resetTranslations());
+  }, [dispatch, profile?.language]);
   return (
     <div key={generation} className="contents">
       <AppLayout>
