@@ -350,7 +350,7 @@ export function AccountPage() {
                     className="h-11 w-full justify-between rounded-xl px-3 font-normal"
                   >
                     <span className="truncate">
-                      {selectedCountry ? `${selectedCountry.flag ? `${selectedCountry.flag} ` : ""}${selectedCountry.name}` : t.selectCountry}
+                      {selectedCountry ? `${selectedCountry.alpha2Code ? `${selectedCountry.alpha2Code} ` : ""}${selectedCountry.name}` : t.selectCountry}
                     </span>
                     <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>

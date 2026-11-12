@@ -17,6 +17,7 @@ import { toast } from "sonner";
 
 import { PageHeader } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
+import { AiTokenCostNotice } from "@/components/AiTokenCostNotice";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppDispatch, useAppSelector, useTranslations } from "@/app/hooks";
@@ -202,6 +203,7 @@ export function InterpreterPage() {
           </Button>
         }
       />
+      <AiTokenCostNotice service="interpreterTurn" action="Each interpretation turn" />
 
       <Card className="overflow-hidden border-primary/10 shadow-card">
         <div className="flex items-center justify-between gap-3 border-b bg-card px-4 py-3 sm:px-5">

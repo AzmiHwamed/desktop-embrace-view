@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import { PageHeader } from "@/components/AppLayout";
 import { BrandLoader, InlineLoading } from "@/components/Loading";
 import { Button } from "@/components/ui/button";
+import { AiTokenCostNotice } from "@/components/AiTokenCostNotice";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -238,6 +239,8 @@ export function ScanPage() {
           </Button>
         }
       />
+      <AiTokenCostNotice service="receiptScan" action="Receipt scanning" />
+      <AiTokenCostNotice service="textTranslation" action="Document translation" />
 
       {pageLoading ? (
         <div className="grid gap-4 lg:grid-cols-2">

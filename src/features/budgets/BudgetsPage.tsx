@@ -26,6 +26,7 @@ import { PageHeader } from "@/components/AppLayout";
 import { InlineLoading } from "@/components/Loading";
 import { MerchantLink } from "@/components/MerchantLink";
 import { Button } from "@/components/ui/button";
+import { AiTokenCostNotice } from "@/components/AiTokenCostNotice";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
@@ -163,6 +164,7 @@ export function BudgetsPage() {
           </Button>
         }
       />
+      <AiTokenCostNotice service="tripPlan" action="AI trip planning" />
 
       {error && (
         <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive"><ErrorText message={error} /></p>

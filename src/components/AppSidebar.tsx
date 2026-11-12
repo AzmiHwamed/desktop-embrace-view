@@ -9,7 +9,6 @@ import {
   Bell,
   UserRound,
   Settings,
-  Plane,
   LifeBuoy,
   Languages,
   WalletCards,
@@ -33,6 +32,7 @@ import {
 import { useAppSelector, useTranslations } from "@/app/hooks";
 import { isRtlLanguage } from "@/lib/rtl";
 import sidebarStrings from "@/locales/en/sidebar.json";
+import travelSmartLogo from "@/assets/travel-smart-logo.png";
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -74,21 +74,14 @@ export function AppSidebar() {
     // panel's own anchor edge, so this needs to be set explicitly.
     <Sidebar collapsible="icon" side={isRtl ? "right" : "left"} className="border-r">
       <SidebarHeader className="p-3">
-        <div className="flex min-w-0 items-center gap-3 px-1 py-1">
-          <span className="bg-brand grid h-9 w-9 shrink-0 place-items-center rounded-xl text-primary-foreground shadow-brand">
-            <Plane className="h-4 w-4" />
-          </span>
-          {!collapsed && (
-            <span className="min-w-0">
-              {/* Brand name intentionally not translated — same convention
-                  as currency/language names elsewhere never running
-                  through `t`. */}
-              <span className="block truncate font-display text-sm font-extrabold tracking-tight">
-                {t.brandName}
-              </span>
-              <span className="block truncate text-xs text-muted-foreground">{t.brandTagline}</span>
-            </span>
-          )}
+        <div className="flex min-w-0 items-center px-1 py-1">
+          <img
+            src={travelSmartLogo}
+            alt="TravelSmart"
+            className={collapsed
+              ? "h-9 w-9 rounded-lg object-cover object-left"
+              : "h-auto w-full max-w-[210px] object-contain object-left"}
+          />
         </div>
       </SidebarHeader>
 
