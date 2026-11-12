@@ -45,6 +45,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     pathname === "/privacy";
   const isStandalonePage = isPublicPage || pathname === "/payment-result";
 
+  // Guest demos are bundled offline. Convert is the only live guest endpoint.
   const guestAllowedPaths = ["/scan", "/convert", "/interpreter", "/explore"];
   const isGuestAllowedPage = guestAllowedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 

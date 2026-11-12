@@ -1,6 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { ScanPage } from "@/features/scan/ScanPage";
+import { GuestDemoPage } from "@/components/GuestDemoPage";
+import { useAppSelector } from "@/app/hooks";
+
+function ScanRoute() {
+  return useAppSelector((state) => state.auth.isGuest) ? <GuestDemoPage kind="scan" /> : <ScanPage />;
+}
 
 export const Route = createFileRoute("/scan")({
   head: () => ({
@@ -17,5 +23,5 @@ export const Route = createFileRoute("/scan")({
       },
     ],
   }),
-  component: ScanPage,
+  component: ScanRoute,
 });

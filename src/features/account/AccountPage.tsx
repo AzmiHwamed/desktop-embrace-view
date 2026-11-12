@@ -370,7 +370,7 @@ export function AccountPage() {
                               setCountryPickerOpen(false);
                             }}
                           >
-                            <span className="w-7 text-base">{country.flag ?? "🌐"}</span>
+                            <span className="w-7 text-base">{country.alpha2Code ?? "🌐"}</span>
                             <span className="min-w-0 flex-1 truncate">{country.name}</span>
                             <span className="text-xs text-muted-foreground">{country.alpha2Code}</span>
                             <Check className={cn("h-4 w-4", currentCountryId === country.id ? "opacity-100" : "opacity-0")} />

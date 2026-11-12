@@ -112,7 +112,7 @@ export function OnboardingPage() {
                 <SelectContent>
                   {countries.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.flag ? `${c.flag} ` : ""}
+                      {c.alpha2Code ? `${c.alpha2Code} ` : ""}
                       {c.name}
                     </SelectItem>
                   ))}
