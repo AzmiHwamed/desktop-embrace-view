@@ -33,6 +33,7 @@ import { useAppSelector, useTranslations } from "@/app/hooks";
 import { isRtlLanguage } from "@/lib/rtl";
 import sidebarStrings from "@/locales/en/sidebar.json";
 import travelSmartLogo from "@/assets/travel-smart-logo.png";
+import travelSmartMark from "@/assets/travel-smart-mark.png";
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -76,10 +77,10 @@ export function AppSidebar() {
       <SidebarHeader className="p-3">
         <div className="flex min-w-0 items-center px-1 py-1">
           <img
-            src={travelSmartLogo}
+            src={collapsed ? travelSmartMark : travelSmartLogo}
             alt="TravelSmart"
             className={collapsed
-              ? "h-9 w-9 rounded-lg object-cover object-left"
+              ? "h-9 w-9 object-contain"
               : "h-auto w-full max-w-[210px] object-contain object-left"}
           />
         </div>
