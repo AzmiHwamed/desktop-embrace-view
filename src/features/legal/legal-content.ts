@@ -9,6 +9,30 @@ export const legalDetails = {
   draft: true,
 };
 
+// Keep the page chrome in the same translation flow as the policy text. These
+// labels appear on public pages as well, so they must not depend on a signed-in
+// profile to be translated.
+export const legalPageStrings = {
+  termsOfService: "Terms of Service",
+  privacyPolicy: "Privacy Policy",
+  language: "Language",
+  selectLanguage: "Select language",
+  backToSignIn: "Back to sign in",
+  lastUpdated: "Last updated: {date}",
+  draftNotice: "Draft for review. Operator details and final policies are pending confirmation.",
+  onThisPage: "On this page",
+  contact: "Contact",
+  support: "support",
+  inAppSupportPrefix: "Existing customers can also use",
+  inAppSupport: "in-app support",
+  inAppSupportSuffix: ".",
+};
+
+export const legalLinkStrings = {
+  termsOfService: legalPageStrings.termsOfService,
+  privacyPolicy: legalPageStrings.privacyPolicy,
+};
+
 export const legalDocuments = {
   terms: {
     title: "Terms of Service",
