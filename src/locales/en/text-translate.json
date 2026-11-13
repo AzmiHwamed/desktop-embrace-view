@@ -2,6 +2,7 @@
   "title": "Text translate",
   "subtitle": "Translate text instantly, wherever you are.",
   "detectLanguage": "Detect language",
+  "sourceLanguage": "Source language",
   "translateTo": "Translate to",
   "sourcePlaceholder": "Type or paste text",
   "translationPlaceholder": "Translation will appear here",

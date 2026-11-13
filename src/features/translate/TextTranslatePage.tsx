@@ -30,6 +30,7 @@ export function TextTranslatePage() {
   const [languages, setLanguages] = useState<Language[]>([]);
   const [source, setSource] = useState("");
   const [translation, setTranslation] = useState("");
+  const [sourceLanguage, setSourceLanguage] = useState("auto");
   const [target, setTarget] = useState(profile?.language?.name ?? "English");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +61,11 @@ export function TextTranslatePage() {
         isGuest ? "/guest/translation/text" : "/translation/text",
         {
           method: "POST",
-          body: JSON.stringify({ text: source, target }),
+          body: JSON.stringify({
+            text: source,
+            target,
+            ...(sourceLanguage === "auto" ? {} : { source: sourceLanguage }),
+          }),
         },
       );
       const result = translatedText(response.data);
@@ -85,10 +90,27 @@ export function TextTranslatePage() {
 
       <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-center gap-3 border-b border-border bg-muted/30 px-5 py-4 sm:px-6">
-          <span className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-            <Languages className="h-4 w-4 text-primary" />
-            {t.detectLanguage}
-          </span>
+          <div className="min-w-44">
+            <label className="sr-only" htmlFor="translation-source-language">
+              {t.sourceLanguage}
+            </label>
+            <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
+              <SelectTrigger
+                id="translation-source-language"
+                className="h-9 rounded-lg bg-background text-sm"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">{t.detectLanguage}</SelectItem>
+                {languages.map((language) => (
+                  <SelectItem key={language.id} value={language.name}>
+                    {language.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <span className="hidden text-muted-foreground sm:inline">→</span>
           <div className="min-w-44">
             <Select value={target} onValueChange={setTarget}>
