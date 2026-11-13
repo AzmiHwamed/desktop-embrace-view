@@ -240,7 +240,6 @@ export function ScanPage() {
         }
       />
       <AiTokenCostNotice service="receiptScan" action="Receipt scanning" />
-      <AiTokenCostNotice service="textTranslation" action="Document translation" />
 
       {pageLoading ? (
         <div className="grid gap-4 lg:grid-cols-2">

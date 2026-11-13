@@ -1,0 +1,13 @@
+{
+  "title": "Text translate",
+  "subtitle": "Translate text instantly, wherever you are.",
+  "detectLanguage": "Detect language",
+  "translateTo": "Translate to",
+  "sourcePlaceholder": "Type or paste text",
+  "translationPlaceholder": "Translation will appear here",
+  "translate": "Translate",
+  "translating": "Translating…",
+  "clear": "Clear",
+  "emptyText": "Enter text to translate.",
+  "translationFailed": "We couldn't translate that text. Please try again."
+}

@@ -14,6 +14,7 @@ import {
   WalletCards,
   Coins,
   Compass,
+  CircleHelp,
 } from "lucide-react";
 
 import {
@@ -55,11 +56,17 @@ export function AppSidebar() {
     { key: "scan", title: t.scan, url: "/scan", icon: ScanLine },
     { key: "convert", title: t.convert, url: "/convert", icon: ArrowLeftRight },
     { key: "interpreter", title: t.interpreter, url: "/interpreter", icon: Languages },
+    { key: "translate", title: t.translate, url: "/translate", icon: Languages },
     { key: "explore", title: t.explore, url: "/explore", icon: Compass },
+    { key: "faq", title: t.faqs, url: "/faq", icon: CircleHelp },
     { key: "history", title: t.history, url: "/history", icon: History },
     { key: "expenses", title: t.expenses, url: "/expenses", icon: PieChart },
     { key: "budgets", title: t.budgets, url: "/budgets", icon: WalletCards },
-  ].filter((item) => !isGuest || ["scan", "convert", "interpreter", "explore"].includes(item.key));
+  ].filter(
+    (item) =>
+      !isGuest ||
+      ["scan", "convert", "interpreter", "translate", "explore", "faq"].includes(item.key),
+  );
 
   const accountItems = [
     { key: "token-deals", title: t.tokenDeals, url: "/tokens", icon: Coins },
@@ -79,9 +86,11 @@ export function AppSidebar() {
           <img
             src={collapsed ? travelSmartMark : travelSmartLogo}
             alt="TravelSmart"
-            className={collapsed
-              ? "h-9 w-9 object-contain"
-              : "h-auto w-full max-w-[210px] object-contain object-left"}
+            className={
+              collapsed
+                ? "h-9 w-9 object-contain"
+                : "h-auto w-full max-w-[210px] object-contain object-left"
+            }
           />
         </div>
       </SidebarHeader>

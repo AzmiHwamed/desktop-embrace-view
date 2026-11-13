@@ -17,6 +17,7 @@ import { Route as ConvertRouteImport } from './routes/convert'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as InterpreterRouteImport } from './routes/interpreter'
@@ -30,6 +31,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TokensRouteImport } from './routes/tokens'
+import { Route as TranslateRouteImport } from './routes/translate'
 import { Route as ExplorePlacePlaceIdRouteImport } from './routes/explore_.place.$placeId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -70,6 +72,11 @@ const ExpensesRoute = ExpensesRouteImport.update({
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -137,6 +144,11 @@ const TokensRoute = TokensRouteImport.update({
   path: '/tokens',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TranslateRoute = TranslateRouteImport.update({
+  id: '/translate',
+  path: '/translate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExplorePlacePlaceIdRoute = ExplorePlacePlaceIdRouteImport.update({
   id: '/explore_/place/$placeId',
   path: '/explore/place/$placeId',
@@ -152,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/delete-account': typeof DeleteAccountRoute
   '/expenses': typeof ExpensesRoute
   '/explore': typeof ExploreRoute
+  '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/history': typeof HistoryRoute
   '/interpreter': typeof InterpreterRoute
@@ -165,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/tokens': typeof TokensRoute
+  '/translate': typeof TranslateRoute
   '/explore/place/$placeId': typeof ExplorePlacePlaceIdRoute
 }
 export interface FileRoutesByTo {
@@ -176,6 +190,7 @@ export interface FileRoutesByTo {
   '/delete-account': typeof DeleteAccountRoute
   '/expenses': typeof ExpensesRoute
   '/explore': typeof ExploreRoute
+  '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/history': typeof HistoryRoute
   '/interpreter': typeof InterpreterRoute
@@ -189,6 +204,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/tokens': typeof TokensRoute
+  '/translate': typeof TranslateRoute
   '/explore/place/$placeId': typeof ExplorePlacePlaceIdRoute
 }
 export interface FileRoutesById {
@@ -201,6 +217,7 @@ export interface FileRoutesById {
   '/delete-account': typeof DeleteAccountRoute
   '/expenses': typeof ExpensesRoute
   '/explore': typeof ExploreRoute
+  '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/history': typeof HistoryRoute
   '/interpreter': typeof InterpreterRoute
@@ -214,6 +231,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/terms': typeof TermsRoute
   '/tokens': typeof TokensRoute
+  '/translate': typeof TranslateRoute
   '/explore_/place/$placeId': typeof ExplorePlacePlaceIdRoute
 }
 export interface FileRouteTypes {
@@ -227,6 +245,7 @@ export interface FileRouteTypes {
     | '/delete-account'
     | '/expenses'
     | '/explore'
+    | '/faq'
     | '/forgot-password'
     | '/history'
     | '/interpreter'
@@ -240,6 +259,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/tokens'
+    | '/translate'
     | '/explore/place/$placeId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -251,6 +271,7 @@ export interface FileRouteTypes {
     | '/delete-account'
     | '/expenses'
     | '/explore'
+    | '/faq'
     | '/forgot-password'
     | '/history'
     | '/interpreter'
@@ -264,6 +285,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/tokens'
+    | '/translate'
     | '/explore/place/$placeId'
   id:
     | '__root__'
@@ -275,6 +297,7 @@ export interface FileRouteTypes {
     | '/delete-account'
     | '/expenses'
     | '/explore'
+    | '/faq'
     | '/forgot-password'
     | '/history'
     | '/interpreter'
@@ -288,6 +311,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/terms'
     | '/tokens'
+    | '/translate'
     | '/explore_/place/$placeId'
   fileRoutesById: FileRoutesById
 }
@@ -300,6 +324,7 @@ export interface RootRouteChildren {
   DeleteAccountRoute: typeof DeleteAccountRoute
   ExpensesRoute: typeof ExpensesRoute
   ExploreRoute: typeof ExploreRoute
+  FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HistoryRoute: typeof HistoryRoute
   InterpreterRoute: typeof InterpreterRoute
@@ -313,6 +338,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   TermsRoute: typeof TermsRoute
   TokensRoute: typeof TokensRoute
+  TranslateRoute: typeof TranslateRoute
   ExplorePlacePlaceIdRoute: typeof ExplorePlacePlaceIdRoute
 }
 
@@ -372,6 +398,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -465,6 +498,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TokensRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/translate': {
+      id: '/translate'
+      path: '/translate'
+      fullPath: '/translate'
+      preLoaderRoute: typeof TranslateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/explore_/place/$placeId': {
       id: '/explore_/place/$placeId'
       path: '/explore/place/$placeId'
@@ -484,6 +524,7 @@ const rootRouteChildren: RootRouteChildren = {
   DeleteAccountRoute: DeleteAccountRoute,
   ExpensesRoute: ExpensesRoute,
   ExploreRoute: ExploreRoute,
+  FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HistoryRoute: HistoryRoute,
   InterpreterRoute: InterpreterRoute,
@@ -497,6 +538,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   TermsRoute: TermsRoute,
   TokensRoute: TokensRoute,
+  TranslateRoute: TranslateRoute,
   ExplorePlacePlaceIdRoute: ExplorePlacePlaceIdRoute,
 }
 export const routeTree = rootRouteImport

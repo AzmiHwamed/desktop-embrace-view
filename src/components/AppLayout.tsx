@@ -8,7 +8,11 @@ import { TopNav } from "@/components/TopNav";
 import { PageLoading } from "@/components/Loading";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { restoreSession } from "@/features/auth/authSlice";
-import { evaluateBudgetReminders, fetchBudgetExpenses, hydrateBudgets } from "@/features/budgets/budgetSlice";
+import {
+  evaluateBudgetReminders,
+  fetchBudgetExpenses,
+  hydrateBudgets,
+} from "@/features/budgets/budgetSlice";
 import { isRtlLanguage } from "@/lib/rtl";
 import { getStoredLanguage } from "@/lib/language-preference";
 import appShellStrings from "@/locales/en/app-shell.json";
@@ -23,7 +27,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const isAuthenticated = Boolean(token) || isGuest;
   const profile = useAppSelector((s) => s.account.profile);
   const budgetsHydrated = useAppSelector((s) => s.budgets.hydrated);
-  const activeBudget = useAppSelector((s) => s.budgets.plans.find((plan) => plan.id === s.budgets.activePlanId));
+  const activeBudget = useAppSelector((s) =>
+    s.budgets.plans.find((plan) => plan.id === s.budgets.activePlanId),
+  );
   const [sessionChecked, setSessionChecked] = useState(false);
   const hasMounted = useHasMounted();
   const t = useTranslations("app-shell", appShellStrings);
@@ -46,8 +52,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const isStandalonePage = isPublicPage || pathname === "/payment-result";
 
   // Guest demos are bundled offline. Convert is the only live guest endpoint.
-  const guestAllowedPaths = ["/scan", "/convert", "/interpreter", "/explore"];
-  const isGuestAllowedPage = guestAllowedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  const guestAllowedPaths = ["/scan", "/convert", "/interpreter", "/explore", "/translate", "/faq"];
+  const isGuestAllowedPage = guestAllowedPaths.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
 
   useEffect(() => {
     if (sessionChecked && !isAuthenticated && !isPublicPage) {

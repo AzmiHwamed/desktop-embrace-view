@@ -83,6 +83,8 @@ function isPublicPath(path: string, method = "GET"): boolean {
     return (
       pathname === "/languages" ||
       pathname.startsWith("/languages/") ||
+      pathname === "/faqs" ||
+      pathname.startsWith("/faqs/") ||
       pathname === "/currencies" ||
       pathname === "/currencies/convert" ||
       pathname.startsWith("/currencies/")
@@ -152,7 +154,9 @@ function getErrorMessage(payload: unknown, status: number): string {
   for (const value of [error.message, error.error, error.body, error.title]) {
     if (typeof value === "string" && value.trim()) return value;
     if (Array.isArray(value)) {
-      const messages = value.filter((item): item is string => typeof item === "string" && !!item.trim());
+      const messages = value.filter(
+        (item): item is string => typeof item === "string" && !!item.trim(),
+      );
       if (messages.length) return messages.join("\n");
     }
   }
